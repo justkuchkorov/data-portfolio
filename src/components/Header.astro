@@ -12,17 +12,8 @@ import HeaderLink from './HeaderLink.astro';
 			<HeaderLink href="/about">About</HeaderLink>
 		</div>
 		<div class="social-links">
-			<a href="https://m.webtoo.ls/@astro" target="_blank">
-				<span class="sr-only">Follow Astro on Mastodon</span>
-				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
-					><path
-						fill="currentColor"
-						d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"
-					></path></svg
-				>
-			</a>
-			<a href="https://twitter.com/astrodotbuild" target="_blank">
-				<span class="sr-only">Follow Astro on Twitter</span>
+			<a href="https://twitter.com/shopirbobo" target="_blank">
+				<span class="sr-only">Follow Abdi on Twitter</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
 					><path
 						fill="currentColor"
@@ -30,8 +21,8 @@ import HeaderLink from './HeaderLink.astro';
 					></path></svg
 				>
 			</a>
-			<a href="https://github.com/withastro/astro" target="_blank">
-				<span class="sr-only">Go to Astro's GitHub repo</span>
+			<a href="https://github.com/justkuchkorov" target="_blank">
+				<span class="sr-only">Go to Abdi's GitHub</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
 					><path
 						fill="currentColor"
@@ -39,6 +30,22 @@ import HeaderLink from './HeaderLink.astro';
 					></path></svg
 				>
 			</a>
+			<button id="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+				<svg id="theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon">
+					<circle cx="12" cy="12" r="5"></circle>
+					<line x1="12" y1="1" x2="12" y2="3"></line>
+					<line x1="12" y1="21" x2="12" y2="23"></line>
+					<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+					<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+					<line x1="1" y1="12" x2="3" y2="12"></line>
+					<line x1="21" y1="12" x2="23" y2="12"></line>
+					<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+					<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+				</svg>
+				<svg id="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon" style="display: none;">
+					<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+				</svg>
+			</button>
 		</div>
 	</nav>
 </header>
@@ -76,6 +83,51 @@ import HeaderLink from './HeaderLink.astro';
 	.social-links,
 	.social-links a {
 		display: flex;
+		align-items: center;
+	}
+	.theme-icon {
+		width: 24px;
+		height: 24px;
+		color: var(--black);
+		transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+	}
+	
+	.theme-icon.animating-out {
+		transform: rotate(90deg) scale(0);
+		opacity: 0;
+	}
+
+	.theme-icon.animating-in {
+		transform: rotate(0deg) scale(1);
+		opacity: 1;
+		animation: spin-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	@keyframes spin-in {
+		0% { transform: rotate(-90deg) scale(0); opacity: 0; }
+		100% { transform: rotate(0deg) scale(1); opacity: 1; }
+	}
+
+	:global(body.dark-theme) .theme-icon {
+		color: var(--text-main);
+	}
+	#theme-toggle {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0.5em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		transition: background 0.3s;
+		margin-left: 0.5rem;
+	}
+	#theme-toggle:hover {
+		background: rgba(0,0,0,0.05);
+	}
+	:global(body.dark-theme) #theme-toggle:hover {
+		background: rgba(255,255,255,0.1);
 	}
 	@media (max-width: 720px) {
 		.social-links {
@@ -83,3 +135,70 @@ import HeaderLink from './HeaderLink.astro';
 		}
 	}
 </style>
+
+<script>
+	const getTheme = () => {
+		if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+			return localStorage.getItem('theme');
+		}
+		// Light is the requested default, but we can respect system pref if desired.
+		// For strict requirements "make the site light mode default", we just return light.
+		return 'light';
+	};
+
+	const themeToggleBtn = document.getElementById('theme-toggle');
+	const iconLight = document.getElementById('theme-icon-light');
+	const iconDark = document.getElementById('theme-icon-dark');
+
+	const updateIcon = (isDark: boolean, animate: boolean = false) => {
+		if (!iconLight || !iconDark) return;
+
+		if (animate) {
+			// Remove previous animations
+			iconLight.classList.remove('animating-in', 'animating-out');
+			iconDark.classList.remove('animating-in', 'animating-out');
+
+			if (isDark) {
+				iconLight.classList.add('animating-out');
+				setTimeout(() => {
+					iconLight.style.display = 'none';
+					iconDark.style.display = 'block';
+					iconDark.classList.add('animating-in');
+				}, 200);
+			} else {
+				iconDark.classList.add('animating-out');
+				setTimeout(() => {
+					iconDark.style.display = 'none';
+					iconLight.style.display = 'block';
+					iconLight.classList.add('animating-in');
+				}, 200);
+			}
+		} else {
+			// Instant switch for initial page load
+			if (isDark) {
+				iconLight.style.display = 'none';
+				iconDark.style.display = 'block';
+			} else {
+				iconLight.style.display = 'block';
+				iconDark.style.display = 'none';
+			}
+		}
+	};
+
+	const theme = getTheme();
+	if (theme === 'dark') {
+		document.body.classList.add('dark-theme');
+		updateIcon(true, false);
+	} else {
+		document.body.classList.remove('dark-theme');
+		updateIcon(false, false);
+	}
+
+	window.localStorage.setItem('theme', theme);
+
+	themeToggleBtn?.addEventListener('click', () => {
+		const isDark = document.body.classList.toggle('dark-theme');
+		localStorage.setItem('theme', isDark ? 'dark' : 'light');
+		updateIcon(isDark, true);
+	});
+</script>
