@@ -8,22 +8,16 @@ const SITE_DESCRIPTION = "portfolio of abdi, an electrical engineering student s
 
 const projects = [
 	{
-		title: "ipc flow optimization",
-		description: "designed and implemented efficient inter-process communication mechanisms for a real-time embedded system, reducing latency by 40%.",
-		tags: ["c++", "rtos", "ipc"],
-		link: "#"
+		title: "Active Suspension System",
+		description: "design and implementation of a robust industrial control loop for automated processes.",
+		tags: ["plc", "scada", "control systems"],
+		link: "/blog/industrial-control-loop"
 	},
 	{
-		title: "iot sensor node design",
-		description: "developed a low-power wireless sensor node for industrial monitoring, from pcb schematics to firmware.",
-		tags: ["pcb design", "spi/i2c", "eagle"],
-		link: "#"
-	},
-	{
-		title: "hardware interfacing prototype",
-		description: "built a robust hardware interface between an fpga and a microcontroller unit using custom data protocols.",
-		tags: ["vhdl", "fpga", "uart"],
-		link: "#"
+		title: "HIL Drive-by-Wire",
+		description: "hardware-in-the-loop simulation for a drive-by-wire automotive system.",
+		tags: ["hil", "automotive", "simulink"],
+		link: "/blog/hil-drive-by-wire"
 	}
 ];
 ---
@@ -38,18 +32,22 @@ const projects = [
 		<main>
 			<section class="hero">
 				<div class="hero-content">
-					<h1 class="glitch" data-text="hi, i am abdi.">hi, i am abdi.</h1>
+					<h1 class="hero-title" aria-label="hi, i am {abdi;}">
+						<span id="typewriter"></span>
+					</h1>
 					<h2>electrical/automation engineer @ unideb</h2>
 					<p>building automation projects for the industry.</p>
 					<div class="hero-actions">
 						<a href="#projects" class="btn primary">my projects</a>
-						<a href="mailto:contact@example.com" class="btn secondary">get in touch</a>
+						<a href="mailto:abdurakhmonkuchkorov@gmail.com" class="btn secondary">get in touch</a>
 					</div>
 				</div>
 			</section>
 
 			<section id="projects" class="projects-section">
-				<h3 class="section-title">featured projects</h3>
+				<div class="section-header">
+					<h3 class="section-title">featured projects</h3>
+				</div>
 				<div class="projects-grid">
 					{projects.map((project) => (
 						<div class="project-card">
@@ -61,16 +59,46 @@ const projects = [
 								</div>
 							</div>
 							<div class="card-action">
-								<a href={project.link} class="view-project">case study <span class="arrow">→</span></a>
+								<a href={project.link} class="view-project">architecture <span class="arrow">→</span></a>
 							</div>
 						</div>
 					))}
+				</div>
+				<div class="view-all-container">
+					<a href="/projects" class="view-all-link">view all projects <span class="arrow">→</span></a>
 				</div>
 			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<script>
+	const tokens = [
+		{ char: 'h' }, { char: 'i' }, { char: ',' }, { char: ' ' },
+		{ char: 'i' }, { char: ' ' }, { char: 'a' }, { char: 'm' }, { char: ' ' },
+		{ char: '{', class: 'brace' }, { char: 'a' }, { char: 'b' }, { char: 'd' }, { char: 'i' },
+		{ char: ';', class: 'semi' }, { char: '}', class: 'brace' }
+	];
+	const target = document.getElementById('typewriter');
+	
+	let currentIndex = 0;
+	function typeWriter() {
+		if (target && currentIndex < tokens.length) {
+			const token = tokens[currentIndex];
+			if (token.class) {
+				target.innerHTML += `<span class="${token.class}">${token.char}</span>`;
+			} else {
+				target.innerHTML += token.char;
+			}
+			currentIndex++;
+			setTimeout(typeWriter, 60);
+		}
+	}
+	
+	// Start typing after a short delay
+	setTimeout(typeWriter, 250);
+</script>
 
 <style>
 	/* Global Smooth Scrolling and Transitions */
@@ -154,20 +182,44 @@ const projects = [
 		color: #1a202c; /* Ensure explicit dark gray text in light mode */
 		margin-bottom: 0.5rem;
 		line-height: 1.1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 1.2em;
 	}
 
-	:global(body.dark-theme) .hero h1 {
+	:global(body.dark-theme) .hero h1 #typewriter {
 		color: #ffffff;
 		background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 	}
 
+	:global(span.brace) {
+		color: #f97316; /* Orange color for {} in both modes */
+		-webkit-text-fill-color: #f97316;
+	}
+
+	:global(span.semi) {
+		color: #dcdcaa; /* VS Code default function/semi-colon yellow-ish color, or use #3b82f6 if you prefer blue */
+		-webkit-text-fill-color: #dcdcaa;
+	}
+
+	:global(body.light-theme span.semi), :global(body:not(.dark-theme) span.semi) {
+		color: #795e26; /* VS code light theme yellow/brown function color */
+		-webkit-text-fill-color: #795e26;
+	}
+
+	@keyframes blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
+	}
+
 	.hero h2 {
 		font-size: 1.8rem;
 		color: #3b82f6;
 		font-weight: 600;
-		margin-bottom: 1.5rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.hero p {
@@ -259,6 +311,53 @@ const projects = [
 
 	:global(body.dark-theme) .section-title::after {
 		background: linear-gradient(90deg, var(--card-border), transparent);
+	}
+
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
+	.section-header .section-title {
+		margin-bottom: 0;
+		flex: 1;
+	}
+
+	.view-all-container {
+		display: flex;
+		justify-content: center;
+		margin-top: 3rem;
+	}
+
+	.view-all-link {
+		color: #3b82f6;
+		font-weight: 600;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		font-size: 1rem;
+		transition: all 0.3s ease;
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		background: rgba(59, 130, 246, 0.1);
+	}
+
+	.view-all-link:hover {
+		background: rgba(59, 130, 246, 0.2);
+		transform: translateY(-2px);
+	}
+
+	.view-all-link .arrow {
+		margin-left: 0.5rem;
+		transition: transform 0.3s ease;
+	}
+
+	.view-all-link:hover .arrow {
+		transform: translateX(4px);
 	}
 
 	.projects-grid {
