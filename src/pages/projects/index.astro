@@ -11,9 +11,9 @@ const SITE_DESCRIPTION = "all automation projects and system architectures by ab
 // Assuming we are just using the same array for now
 const projects = [
 	{
-		title: "Active Suspension System",
+		title: "Active Suspension",
 		description: "design and implementation of a robust industrial control loop for automated processes.",
-		tags: ["plc", "scada", "control systems"],
+		tags: ["plc", "python", "control systems"],
 		link: "/blog/industrial-control-loop"
 	},
 	{
@@ -50,7 +50,7 @@ const projects = [
 							</div>
 						</div>
 						<div class="card-action">
-							<a href={project.link} class="view-project">view details <span class="arrow">→</span></a>
+							<a href={project.link} class="view-project">architecture <span class="arrow">→</span></a>
 						</div>
 					</div>
 				))}
@@ -61,55 +61,7 @@ const projects = [
 </html>
 
 <style>
-	/* Global Smooth Scrolling and Transitions reused from index */
-	:global(html) {
-		scroll-behavior: smooth;
-	}
 
-	:global(body), :global(body *) {
-		transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-	}
-
-	/* CSS Variables defined for Light Mode (default) */
-	:global(body) {
-		--bg-color: #ffffff;
-		--text-main: #1a202c;
-		--text-muted: #4a5568;
-		--accent-glow: #2563eb;
-		--accent-dark: #1e3a8a;
-		--card-bg: #ffffff;
-		--card-border: #e2e8f0;
-	}
-
-	/* Dark Mode Overrides */
-	:global(body.dark-theme) {
-		--bg-color: #0f1115;
-		--text-main: #e2e8f0;
-		--text-muted: #94a3b8;
-		--accent-glow: #3b82f6;
-		--accent-dark: #1e3a8a;
-		--card-bg: rgba(30, 41, 59, 0.7);
-		--card-border: rgba(255, 255, 255, 0.1);
-		
-		background: var(--bg-color);
-		color: var(--text-main);
-	}
-
-	:global(.dark-theme header) {
-		background: rgba(15, 17, 21, 0.8) !important;
-		backdrop-filter: blur(10px);
-		border-bottom: 1px solid var(--card-border);
-		box-shadow: none !important;
-	}
-	
-	:global(.dark-theme nav a) {
-		color: var(--text-main) !important;
-	}
-
-	:global(.dark-theme footer) {
-		color: var(--text-muted) !important;
-		background: var(--bg-color) !important;
-	}
 
 	main {
 		max-width: 1000px;
@@ -273,5 +225,14 @@ const projects = [
 
 	.view-project:hover .arrow {
 		transform: translateX(5px);
+	}
+
+	@media (max-width: 768px) {
+		.projects-grid {
+			grid-template-columns: 1fr;
+		}
+		.page-title {
+			font-size: 2.5rem;
+		}
 	}
 </style>

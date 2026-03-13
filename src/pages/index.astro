@@ -8,9 +8,9 @@ const SITE_DESCRIPTION = "portfolio of abdi, an electrical engineering student s
 
 const projects = [
 	{
-		title: "Active Suspension System",
+		title: "Active Suspension",
 		description: "design and implementation of a robust industrial control loop for automated processes.",
-		tags: ["plc", "scada", "control systems"],
+		tags: ["plc", "python", "control systems"],
 		link: "/blog/industrial-control-loop"
 	},
 	{
@@ -101,55 +101,7 @@ const projects = [
 </script>
 
 <style>
-	/* Global Smooth Scrolling and Transitions */
-	:global(html) {
-		scroll-behavior: smooth;
-	}
 
-	:global(body), :global(body *) {
-		transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-	}
-
-	/* CSS Variables defined for Light Mode (default) */
-	:global(body) {
-		--bg-color: #ffffff;
-		--text-main: #1a202c;
-		--text-muted: #4a5568;
-		--accent-glow: #2563eb; /* darker blue for light mode readability */
-		--accent-dark: #1e3a8a;
-		--card-bg: #ffffff;
-		--card-border: #e2e8f0;
-	}
-
-	/* Dark Mode Overrides */
-	:global(body.dark-theme) {
-		--bg-color: #0f1115;
-		--text-main: #e2e8f0;
-		--text-muted: #94a3b8;
-		--accent-glow: #3b82f6; /* brighter blue for dark mode glow */
-		--accent-dark: #1e3a8a;
-		--card-bg: rgba(30, 41, 59, 0.7);
-		--card-border: rgba(255, 255, 255, 0.1);
-		
-		background: var(--bg-color);
-		color: var(--text-main);
-	}
-
-	:global(.dark-theme header) {
-		background: rgba(15, 17, 21, 0.8) !important;
-		backdrop-filter: blur(10px);
-		border-bottom: 1px solid var(--card-border);
-		box-shadow: none !important;
-	}
-	
-	:global(.dark-theme nav a) {
-		color: var(--text-main) !important;
-	}
-
-	:global(.dark-theme footer) {
-		color: var(--text-muted) !important;
-		background: var(--bg-color) !important;
-	}
 
 	main {
 		max-width: 1000px;
@@ -493,13 +445,18 @@ const projects = [
 			margin-bottom: 3rem;
 		}
 		.hero-actions {
-			justify-content: center;
+			flex-direction: column;
+			gap: 0.5rem;
+			width: 100%;
 		}
 		.hero-graphic {
 			display: none; /* Hide abstract graphic on mobile for simplicity */
 		}
 		.hero h1 {
-			font-size: 3rem;
+			font-size: 2.5rem;
+		}
+		.projects-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
