@@ -82,5 +82,180 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			</article>
 		</main>
 		<Footer />
+		<style is:global>
+  /* 1. Force the Astro container to allow absolute positioning */
+  pre.astro-code {
+    position: relative !important;
+    padding-top: 2.5rem !important; /* Make room for the copy button */
+  }
+
+  /* 2. The Copy Button */
+  .abdi-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e5e7eb;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: 0.2s ease;
+  }
+  .abdi-copy-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+  /* 3. The Collapsed State */
+  pre.astro-code.is-collapsed {
+    max-height: 350px !important;
+    overflow: hidden !important;
+  }
+
+  /* 4. The Perfect Gradient Fade */
+  pre.astro-code.is-collapsed::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    /* Uses the dynamic variable we set in JS, falls back to dark gray */
+    background: linear-gradient(to bottom, transparent, var(--shiki-bg, #1f2937));
+    pointer-events: none;
+  }
+
+  /* 5. The Show More / Show Less Button */
+  .abdi-show-more, .abdi-show-less {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  .abdi-show-more:hover { background: #2563eb; }
+  
+  .abdi-show-less {
+    display: none;
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #475569;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  .abdi-show-less:hover { background: #334155; }
+
+  /* Ensure the container transitions smoothly */
+  pre.astro-code {
+    transition: max-height 0.3s ease-in-out;
+  }
+</style>
+
+<script is:inline>
+  // Define the logic in a reusable function
+  function initCodeBlocks() {
+    // Target Astro's exact output class
+    const codeBlocks = document.querySelectorAll('pre.astro-code');
+
+    codeBlocks.forEach((pre) => {
+      // Stop it from duplicating buttons on page changes
+      if (pre.querySelector('.abdi-copy-btn')) return;
+
+      // --- INJECT COPY BUTTON ---
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'abdi-copy-btn';
+      copyBtn.innerText = 'Copy';
+      
+      copyBtn.onclick = async () => {
+        // Target the inner code tag so we only get pure Python text
+        const codeElement = pre.querySelector('code');
+        const textToCopy = codeElement ? codeElement.innerText : pre.innerText;
+        
+        await navigator.clipboard.writeText(textToCopy.trim());
+        copyBtn.innerText = 'Copied!';
+        copyBtn.style.background = '#10b981'; // Green
+        copyBtn.style.borderColor = '#10b981';
+        
+        setTimeout(() => {
+          copyBtn.innerText = 'Copy';
+          copyBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+          copyBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        }, 2000);
+      };
+      
+      pre.appendChild(copyBtn);
+
+      // --- INJECT COLLAPSE LOGIC ---
+      // Wait 150ms for the browser to finish rendering the fonts
+      setTimeout(() => {
+        if (pre.scrollHeight > 400) {
+          pre.classList.add('is-collapsed');
+          
+          // Read Shiki's exact background color and give it to CSS for a seamless gradient
+          const exactBgColor = window.getComputedStyle(pre).backgroundColor;
+          pre.style.setProperty('--shiki-bg', exactBgColor);
+          
+          const showBtn = document.createElement('button');
+          showBtn.className = 'abdi-show-more';
+          showBtn.innerText = 'Show More';
+
+          const lessBtn = document.createElement('button');
+          lessBtn.className = 'abdi-show-less';
+          lessBtn.innerText = 'Show Less';
+          lessBtn.style.display = 'none';
+          
+          showBtn.onclick = () => {
+            pre.classList.remove('is-collapsed');
+            showBtn.style.display = 'none';
+            lessBtn.style.display = 'block';
+          };
+
+          lessBtn.onclick = () => {
+            pre.classList.add('is-collapsed');
+            lessBtn.style.display = 'none';
+            showBtn.style.display = 'block';
+            
+            // Scroll back up so the user isn't lost at the bottom of the long block
+            const headerOffset = 100;
+            const elementPosition = pre.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            
+            window.scrollTo({
+                 top: offsetPosition,
+                 behavior: "smooth"
+            });
+          };
+          
+          pre.appendChild(showBtn);
+          pre.appendChild(lessBtn);
+        }
+      }, 150);
+    });
+  }
+
+  // Run on initial load
+  initCodeBlocks();
+  
+  // Run on subsequent client-side navigations
+  document.addEventListener('astro:after-swap', initCodeBlocks);
+</script>
 	</body>
 </html>

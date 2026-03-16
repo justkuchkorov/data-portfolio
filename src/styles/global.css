@@ -31,12 +31,14 @@ body {
 	line-height: 1.6;
 	letter-spacing: -0.01em;
 }
+
 main {
 	width: 720px;
 	max-width: calc(100% - 2em);
 	margin: auto;
 	padding: 3em 1em;
 }
+
 h1,
 h2,
 h3,
@@ -48,78 +50,99 @@ h6 {
 	line-height: 1.2;
 	letter-spacing: -0.03em;
 }
+
 h1 {
 	font-size: 2.5rem;
 }
+
 h2 {
 	font-size: 1.75rem;
 }
+
 h3 {
 	font-size: 1.953em;
 }
+
 h4 {
 	font-size: 1.563em;
 }
+
 h5 {
 	font-size: 1.25em;
 }
+
 strong,
 b {
 	font-weight: 700;
 }
+
 a {
 	color: var(--accent);
 }
+
 a:hover {
 	color: var(--accent);
 }
+
 p {
 	margin-bottom: 1em;
 }
+
 .prose p {
 	margin-bottom: 2em;
 }
+
 textarea {
 	width: 100%;
 	font-size: 16px;
 }
+
 input {
 	font-size: 16px;
 }
+
 table {
 	width: 100%;
 }
+
 img {
 	max-width: 100%;
 	height: auto;
 	border-radius: 8px;
 }
+
 code {
 	padding: 2px 5px;
 	background-color: rgb(var(--gray-light));
 	border-radius: 2px;
 }
+
 pre {
 	padding: 1.5em;
 	border-radius: 8px;
 }
-pre > code {
+
+pre>code {
 	all: unset;
 }
+
 blockquote {
 	border-left: 4px solid var(--accent);
 	padding: 0 0 0 20px;
 	margin: 0;
 	font-size: 1.333em;
 }
+
 hr {
 	border: none;
 	border-top: 1px solid rgb(var(--gray-light));
 }
+
 @media (max-width: 720px) {
 	body {
 		font-size: 18px;
 	}
+
 	main {
 		padding: 1em;
 	}
@@ -130,7 +153,8 @@ html {
 	scroll-behavior: smooth;
 }
 
-body, body * {
+body,
+body * {
 	transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -146,7 +170,7 @@ body {
 }
 
 /* Dark Mode Overrides */
-body.dark-theme {
+html.dark-theme body {
 	--bg-color: #0f1115;
 	--text-main: #e2e8f0;
 	--text-muted: #94a3b8;
@@ -154,7 +178,7 @@ body.dark-theme {
 	--accent-dark: #1e3a8a;
 	--card-bg: rgba(30, 41, 59, 0.7);
 	--card-border: rgba(255, 255, 255, 0.1);
-	
+
 	background: var(--bg-color);
 	color: var(--text-main);
 }
@@ -202,4 +226,22 @@ body.dark-theme {
 	clip-path: inset(50%);
 	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
+}
+
+/* --- DARK MODE INLINE CODE FIX --- */
+.dark-theme code,
+.dark-theme .prose code {
+	background-color: #1f2937 !important;
+	color: #fbbf24 !important;
+	/* Terminal yellow for high contrast */
+	border-radius: 4px !important;
+	padding: 2px 6px !important;
+}
+
+/* Protects multi-line code blocks */
+.dark-theme pre code,
+.dark-theme .prose pre code {
+	background-color: transparent !important;
+	color: inherit !important;
+	padding: 0 !important;
 }

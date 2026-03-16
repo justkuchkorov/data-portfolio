@@ -57,3 +57,20 @@ const { title, description, image = FallbackImage } = Astro.props;
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image.src, Astro.url)} />
+
+<!-- Theme Init (Blocking FOUC) -->
+<script is:inline>
+	function applyTheme() {
+		const storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
+		const isDark = storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+		
+		// Only attach to the <html> tag, never the <body>
+		if (isDark) {
+			document.documentElement.classList.add('dark', 'dark-theme');
+		} else {
+			document.documentElement.classList.remove('dark', 'dark-theme');
+		}
+	}
+	applyTheme();
+	document.addEventListener('astro:after-swap', applyTheme);
+</script>
