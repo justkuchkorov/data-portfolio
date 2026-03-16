@@ -1,7 +1,7 @@
 ---
 title: 'HIL Drive-by-Wire Simulation'
 description: 'Connecting physical steering input to an industrial SoftPLC via Modbus TCP.'
-pubDate: 'Mar 11 2026'
+pubDate: '26 December 2025'
 heroImage: '../../assets/blog-placeholder-2.jpg'
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: 'Active Suspension HIL Simulation (Python + CODESYS)'
 description: 'How I built a Hardware-in-the-Loop testbench from scratch to bridge Python physics with an industrial SoftPLC.'
-pubDate: '12 March 2026'
+pubDate: '10 January 2026'
 heroImage: '../../assets/active-suspension.jpg'
 ---
 
@@ -14,13 +14,13 @@ Actually, since we have been starting to study in IPC, which stands for *Industr
 
 
 
-Let’s now speak about that ***Active Suspension Project***. At that time, the beginning of new year 2026, I was searching a topic for my thesis work. (Because I am already senior year student and we have to work on a thesis work to graduate.) I don’t wanna say myself as a car-guy, but I am so addicted to ***F1***. My one of dreams and targets is to work on F1 teams, especially *Mercedes AMG Petronas F1 Team*. I found my area for my possible projects, it is Automation + Automotive Engineering. And I decided to stop on Active Suspension. So, it happened like that.    
+Let’s now speak about that ***Active Suspension Project***. At that time, the beginning of new year 2026, I was searching a topic for my thesis work. (Because I am already senior year student and we have to work on a thesis work to graduate.) I wouldn't call myself a traditional 'car guy', but I am absolutely addicted to ***F1***. My one of dreams and targets is to work on F1 teams, especially *Mercedes AMG Petronas F1 Team*. I found my area for my possible projects, it is Automation + Automotive Engineering. And I decided to stop on Active Suspension. So, it happened like that.    
 
 
 
 
 #### Down the Rabbit Hole
-First of all, I started to search the definition of Active Suspension. Actually, what is that? Which part of car uses that thing? So, I dived into researching part. `Active Suspension - is an advanced automotive system that uses sensors, computers, and actuators to independently control each wheel's vertical movement in real-time.` That is a real definition. But is it understandable? I really make it easy to understand like that look back in Uzbekistan, we had a lots of potholed, bumpy roads, so, this system should not make people inside the car feel this bumpy road, meaning people should not feel that way. So, I got the definition.
+First of all, I started to search the definition of Active Suspension. Actually, what is that? Which part of car uses that thing? So, I dived into researching part. `Active Suspension - is an advanced automotive system that uses sensors, computers, and actuators to independently control each wheel's vertical movement in real-time.` That is a real definition. But is it understandable? I really make it easy to understand like that growing up in Uzbekistan, we had a lot of pothole-filled, bumpy roads. The goal of this system is to physically isolate the passengers from feeling that chaos. So, I got the definition.
 
 
 
@@ -35,7 +35,7 @@ Let’s talk about Python which should have played a role of physics of a real c
 
 
 \- **The Quarter-Car Mass Model** -
-<br>I took the quarter-car mass model. It means i did not stimulate 2,000kg car, I divided the car into 4 part corners (300kg per corner). So, the code: <br>`mass = 300.0`
+<br>I took the quarter-car mass model. This means I did not simulate a full 2,000kg car, I divided the car into 4 part corners (300kg per corner). So, the code: <br>`mass = 300.0`
 
 
 
@@ -159,9 +159,9 @@ except KeyboardInterrupt:
 ![My Hardware Setup](../../assets/plc_code.png)
 Let me introduce you the **CODESYS SoftPLC**. Here we, engineers, write the code for the PLC. In this case, I used **Structured Text (ST)** language, which is standard in industrial automation (IEC 61131-3). This code could be functional for a V1 simulation, but there is a weakness to be perfect. Due to using a *Proportional gain* (`Kp`) and not an *Integral gain* (`Ki`), the car has a **steady-state error**. It means, the car will never reach the perfect height, instead of it, it will stay slightly above or below the perfect height. To upgrade it to V2, I will use a ***PID*** controller, which is a control loop feedback mechanism widely used in industrial control systems and it helps to reach its perfect target value. For now, let's review the code:
 
-\- **The IT/OT Data Bridge** -
-<br>`error := setpoint - WORD_TO_INT(sensor_car_height);`
-<br>Modbus TCP/IP communicates using *16-bit registers*, which CODESYS reads as a `WORD` (unsigned). However, to calculate physical movement, the car can be above or below the setpoint, meaning my error can be a negative number. I had to strictly cast the incoming sensor data using `WORD_TO_INT()` so the PLC could process negative mathematical errors without integer underflow.
+**- The IT/OT Data Bridge -**<br> 
+`error := setpoint - WORD_TO_INT(sensor_car_height);`<br>
+Modbus TCP/IP communicates using *16-bit registers*, which CODESYS reads as a `WORD` (unsigned). However, to calculate physical movement, the car can be above or below the setpoint, meaning my error can be a negative number. I had to strictly cast the incoming sensor data using `WORD_TO_INT()` so the PLC could process negative mathematical errors without integer underflow.
 
 **- The P-Controller Calculation -**<br>
 `correction := error * Kp;`<br>
