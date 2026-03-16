@@ -182,7 +182,7 @@ To build this, I connected physical hardware to virtual processing using standar
 
 **The Result:** A fully functional, bidirectional HIL testbench processing physical driver inputs and PLC overrides with **<50ms latency**.
 
-<a href="https://github.com/justkuchkorov/drive-by-wire-hil" target="_blank">
+<a href="https://github.com/justkuchkorov/HIL-Drive-By-Wire-Sim" target="_blank">
   <button style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-block: 20px; font-weight: bold;">
     View the Messy Source Code on GitHub
   </button>
