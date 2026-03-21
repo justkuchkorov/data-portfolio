@@ -75,7 +75,7 @@ I wrote the code with the controller called **Bang-Bang Controller**. What is di
 &bull; **`Bang-Bang Controller`** acts like a light switch. The fan is either 100% **ON** or 100% **OFF**. 
 I chose the easiest one for now, and I hope I will improve this system to **PID** controller :) <br>
 
-![PLC Code for Transformer Digital Twin](../../assets/plc_transformer2.png)
+![PLC Code for Transformer Digital Twin](../../assets/plc_transformer.png)
 
 **- PLC Logic -**<br>
 As I chose *Bang-Bang* controller, I did not spend lots of time for PLC code part. It was quite simple. I just needed to declare **IF** statements to choose one choice between two states.<br>
