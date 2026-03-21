@@ -91,10 +91,10 @@ As I chose *Bang-Bang* controller, I did not spend lots of time for PLC code par
 1. **The Heat Up (4:33 PM - 4:35 PM)**
 Look at the far left. The **orange line** (Grid Load) shoots up from *60%* to almost *90%*. Because the load is high, the dark **blue line** (Transformer Core Temperature) climbs aggressively. There are no **light blue** bars, which means the fans are completely off. The PLC is watching and waiting.
 2. **The Intervention (4:35 PM)**
-Right around 4:35 PM, the **dark blue line** hits that magical *75°C* threshold. The solid wall of **light blue** bars appears. Your CODESYS SoftPLC detected the danger, executed ST logic, fired the Modbus command over *Port 502*, and turned the fan on.
+Right around 4:35 PM, the **dark blue line** hits that magical *75°C* threshold. The solid wall of **light blue** bars appears. CODESYS SoftPLC detected the danger, executed ST logic, fired the Modbus command over *Port 502*, and turned the fan on.
 3. **The Hysteresis "Sawtooth" (4:40 PM - 4:46 PM)**
 This is the most impressive part of the entire project. Look at the right side of the chart where the light blue bars turn into *"stripes"* (turning on and off) and the dark blue temperature line creates a *zig-zag "sawtooth" pattern*.
-- *Why is this brilliant?* Because it proves your `ELSIF Simulated_Temp <= 70` logic is working flawlessly!<br>
+- *Why is this brilliant?* Because it proves `ELSIF Simulated_Temp <= 70` logic is working flawlessly.<br>
 - The fan cools the transformer down to exactly *70°C*, then the PLC shuts the fan off (**the white gaps**). Without the fan, the remaining grid load heats the transformer back up to *75°C*, and the PLC kicks the fan back on.<br>
 
 #### Conclusion
