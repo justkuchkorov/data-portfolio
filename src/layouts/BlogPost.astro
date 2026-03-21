@@ -60,7 +60,11 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<main>
 			<article>
 				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
+					{heroImage && (
+						typeof heroImage === 'string' ? 
+						<img width={1020} height={510} src={heroImage} alt="" /> :
+						<Image width={1020} height={510} src={heroImage} alt="" />
+					)}
 				</div>
 				<div class="prose">
 					<div class="title">
@@ -167,6 +171,30 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
   pre.astro-code {
     transition: max-height 0.3s ease-in-out;
   }
+
+  /* Lightbox Styles */
+  #lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    cursor: zoom-out;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  #lightbox-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
 </style>
 
 <script is:inline>
@@ -251,11 +279,53 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
     });
   }
 
+  function initLightbox() {
+    let overlay = document.getElementById('lightbox-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'lightbox-overlay';
+      overlay.innerHTML = '<img src="" alt="Zoomed view" />';
+      document.body.appendChild(overlay);
+      
+      overlay.onclick = () => {
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      };
+    }
+
+    const prose = document.querySelector('.prose');
+    if (!prose) return;
+
+    // Use event delegation for better reliability
+    prose.onclick = (e) => {
+      const img = e.target.closest('img');
+      if (img && !img.closest('.hero-image')) {
+        overlay.querySelector('img').src = img.src;
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    };
+
+    // Set cursor for all images in prose
+    const images = prose.querySelectorAll('img');
+    images.forEach(img => {
+      if (!img.closest('.hero-image')) {
+        img.style.cursor = 'zoom-in';
+      }
+    });
+  }
+
   // Run on initial load
   initCodeBlocks();
+  initLightbox();
   
   // Run on subsequent client-side navigations
-  document.addEventListener('astro:after-swap', initCodeBlocks);
+  document.addEventListener('astro:after-swap', () => {
+    initCodeBlocks();
+    initLightbox();
+  });
+  // Also run on page load just in case
+  window.addEventListener('load', initLightbox);
 </script>
 	</body>
 </html>

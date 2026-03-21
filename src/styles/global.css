@@ -104,6 +104,50 @@ p {
 
 .prose p {
 	margin-bottom: 1.8rem;
+	text-align: justify;
+	hyphens: auto;
+}
+
+/* Image styling for blog posts */
+.prose img {
+	display: block;
+	margin: 2rem auto;
+	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+	transition: transform 0.3s ease;
+}
+
+.prose .img-container {
+	margin: 2.5rem 0;
+	text-align: center;
+}
+
+.prose .img-container img {
+	margin: 0 auto;
+	max-width: 80%; /* Smaller by default */
+	cursor: zoom-in;
+}
+
+.prose .img-container img:hover {
+	transform: scale(1.02);
+}
+
+.prose .img-caption {
+	display: block;
+	margin-top: 0.75rem;
+	font-size: 0.9rem;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+@media (max-width: 720px) {
+	.prose p {
+		text-align: justify;
+		text-justify: inter-word;
+	}
+	
+	.prose .img-container img {
+		max-width: 100%; /* Full width on mobile for better visibility */
+	}
 }
 
 textarea {
