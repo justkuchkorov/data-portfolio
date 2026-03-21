@@ -5,6 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import Analytics from '@vercel/analytics/astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
@@ -86,6 +87,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			</article>
 		</main>
 		<Footer />
+		<Analytics />
 		<style is:global>
   /* 1. Force the Astro container to allow absolute positioning */
   pre.astro-code {
