@@ -3,6 +3,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Analytics from '@vercel/analytics/astro';
+import ProfilePhoto from '../assets/myphoto.JPG';
 
 const SITE_TITLE = "abdi | electrical engineer";
 const SITE_DESCRIPTION = "portfolio of abdi, an electrical engineering student specializing in ipc.";
@@ -10,15 +11,17 @@ const SITE_DESCRIPTION = "portfolio of abdi, an electrical engineering student s
 const projects = [
 	{
 		title: "Transformer Digital Twin",
-		description: "closed-loop thermal simulation to stress-test industrial PLC safety logic.",
+		description: "Closed-loop thermal simulation to stress-test industrial PLC safety logic.",
 		tags: ["digital twin", "plc", "simulation"],
-		link: "/blog/transformer-digital-twin"
+		link: "/blog/transformer-digital-twin",
+		github: "https://github.com/justkuchkorov/transformer_digital_twin"
 	},
 	{
-		title: "Active Suspension",
-		description: "design and implementation of a robust industrial control loop for automated processes.",
+		title: "Active Suspension HIL",
+		description: "Quarter-car physics bridged to CODESYS SoftPLC over Modbus TCP/IP.",
 		tags: ["plc", "python", "control systems"],
-		link: "/blog/active-suspension"
+		link: "/blog/active-suspension",
+		github: "https://github.com/justkuchkorov/active-suspension-hil"
 	}
 ];
 ---
@@ -28,45 +31,71 @@ const projects = [
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="">
+	<body>
 		<Header />
 		<main>
+			<!-- Hero -->
 			<section class="hero">
-				<div class="hero-content">
-					<h1 class="hero-title" aria-label="hi, i am {abdi;}">
-						<span id="typewriter"></span>
-					</h1>
-					<h2>electrical/automation engineer @ unideb</h2>
-					<p>building automation projects for the industry.</p>
-					<div class="hero-actions">
-						<a href="#projects" class="btn primary">my projects</a>
-						<a href="mailto:abdurakhmonkuchkorov@gmail.com" class="btn secondary">get in touch</a>
-					</div>
+				<p class="hero-greeting" aria-label="hi, i am {abdi;}">
+					<span id="typewriter"></span>
+				</p>
+				<h1>electrical & automation engineer</h1>
+				<p class="hero-sub">Building HIL simulations and industrial control systems. Senior EE student at the University of Debrecen.</p>
+				<div class="hero-actions">
+					<a href="#projects" class="btn-primary">Projects</a>
+					<a href="#contact" class="btn-outline">Contact</a>
 				</div>
 			</section>
 
-			<section id="projects" class="projects-section">
-				<div class="section-header">
-					<h3 class="section-title">featured projects</h3>
-				</div>
-				<div class="projects-grid">
+			<!-- Featured Projects -->
+			<section id="projects" class="section">
+				<p class="section-label">Featured Projects</p>
+				<div class="projects-list">
 					{projects.map((project) => (
-						<div class="project-card">
-							<div class="card-content">
-								<h4>{project.title}</h4>
+						<a href={project.link} class="project-row">
+							<div class="project-info">
+								<h3>{project.title}</h3>
 								<p>{project.description}</p>
 								<div class="tags">
 									{project.tags.map(tag => <span class="tag">{tag}</span>)}
 								</div>
 							</div>
-							<div class="card-action">
-								<a href={project.link} class="view-project">architecture <span class="arrow">→</span></a>
-							</div>
-						</div>
+							<span class="project-arrow">&rarr;</span>
+						</a>
 					))}
 				</div>
-				<div class="view-all-container">
-					<a href="/projects" class="view-all-link">view all projects <span class="arrow">→</span></a>
+				<a href="/projects" class="see-all">All projects &rarr;</a>
+			</section>
+
+			<!-- Contact -->
+			<section id="contact" class="section">
+				<p class="section-label">Contact</p>
+				<div class="contact-grid">
+					<div class="contact-photo-wrap">
+						<img src={ProfilePhoto.src} alt="Abdi" class="contact-photo" />
+					</div>
+					<div class="contact-links">
+						<a href="/abdi_resume.pdf" target="_blank" class="contact-row">
+							<span class="contact-key">Resume</span>
+							<span class="contact-val">Download PDF</span>
+							<span class="contact-arr">&rarr;</span>
+						</a>
+						<a href="mailto:abdurakhmonkuchkorov@gmail.com" class="contact-row">
+							<span class="contact-key">Email</span>
+							<span class="contact-val">abdurakhmonkuchkorov@gmail.com</span>
+							<span class="contact-arr">&rarr;</span>
+						</a>
+						<a href="https://www.linkedin.com/in/justkuchkorov/" target="_blank" class="contact-row">
+							<span class="contact-key">LinkedIn</span>
+							<span class="contact-val">/in/justkuchkorov</span>
+							<span class="contact-arr">&rarr;</span>
+						</a>
+						<a href="https://github.com/justkuchkorov" target="_blank" class="contact-row">
+							<span class="contact-key">GitHub</span>
+							<span class="contact-val">@justkuchkorov</span>
+							<span class="contact-arr">&rarr;</span>
+						</a>
+					</div>
 				</div>
 			</section>
 		</main>
@@ -83,415 +112,330 @@ const projects = [
 		{ char: ';', class: 'semi' }, { char: '}', class: 'brace' }
 	];
 	const target = document.getElementById('typewriter');
-	
-	let currentIndex = 0;
-	function typeWriter() {
-		if (target && currentIndex < tokens.length) {
-			const token = tokens[currentIndex];
-			if (token.class) {
-				target.innerHTML += `<span class="${token.class}">${token.char}</span>`;
+	let i = 0;
+	function type() {
+		if (target && i < tokens.length) {
+			const t = tokens[i];
+			if (t.class) {
+				target.innerHTML += `<span class="${t.class}">${t.char}</span>`;
 			} else {
-				target.innerHTML += token.char;
+				target.innerHTML += t.char;
 			}
-			currentIndex++;
-			setTimeout(typeWriter, 60);
+			i++;
+			setTimeout(type, 55);
 		}
 	}
-	
-	// Start typing after a short delay
-	setTimeout(typeWriter, 250);
+	setTimeout(type, 200);
 </script>
 
 <style>
-
-
 	main {
-		max-width: 1000px;
+		max-width: var(--page-width);
 		margin: 0 auto;
-		padding: 4rem 2rem;
+		padding: var(--space-16) var(--page-pad) var(--space-20);
 	}
 
-	/* Hero Section */
+	/* Hero */
 	.hero {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		min-height: 50vh;
-		margin-bottom: 6rem;
-		position: relative;
+		padding: var(--space-20) 0 var(--space-16);
 	}
 
-	.hero-content {
-		z-index: 2;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.hero h1 {
-		font-size: 4.5rem;
-		font-weight: 800;
-		color: #1a202c; /* Ensure explicit dark gray text in light mode */
-		margin-bottom: 0.5rem;
-		line-height: 1.1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 1.2em;
-	}
-
-	:global(html.dark-theme) .hero h1 #typewriter {
-		color: #ffffff;
-		background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+	.hero-greeting {
+		font-family: var(--mono);
+		font-size: clamp(1.5rem, 3vw, 2rem);
+		font-weight: 700;
+		color: var(--text);
+		margin-bottom: var(--space-3);
+		min-height: 1.4em;
 	}
 
 	:global(span.brace) {
-		color: #f97316; /* Orange color for {} in both modes */
-		-webkit-text-fill-color: #f97316;
+		color: var(--accent);
 	}
 
 	:global(span.semi) {
-		color: #dcdcaa; /* VS Code default function/semi-colon yellow-ish color, or use #3b82f6 if you prefer blue */
-		-webkit-text-fill-color: #dcdcaa;
+		color: var(--text-muted);
 	}
 
-	:global(html.light-theme span.semi), :global(html:not(.dark-theme) span.semi) {
-		color: #795e26; /* VS code light theme yellow/brown function color */
-		-webkit-text-fill-color: #795e26;
-	}
-
-	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0; }
-	}
-
-	.hero h2 {
-		font-size: 1.8rem;
-		color: #3b82f6;
-		font-weight: 600;
-		margin-bottom: 0.5rem;
-	}
-
-	.hero p {
-		font-size: 1.2rem;
-		color: #4a5568 !important; /* Force explicit legibility in light mode */
+	.hero h1 {
+		font-size: clamp(2rem, 4vw, 3rem);
+		margin-bottom: var(--space-4);
 		max-width: 600px;
-		line-height: 1.6;
-		margin-bottom: 2.5rem;
 	}
 
-	:global(html.dark-theme) .hero p {
-		color: var(--text-muted) !important;
+	.hero-sub {
+		font-size: 1.05rem;
+		color: var(--text-muted);
+		max-width: 520px;
+		line-height: 1.7;
+		margin-bottom: var(--space-8);
 	}
 
 	.hero-actions {
 		display: flex;
-		justify-content: center;
-		gap: 1rem;
+		gap: var(--space-3);
 	}
 
-	.btn {
-		padding: 0.8rem 1.5rem;
-		border-radius: 8px;
-		font-weight: 600;
-		text-decoration: none;
-		transition: all 0.3s ease;
-		font-size: 1rem;
-	}
-
-	.btn.primary {
-		background: var(--accent-glow);
-		color: #ffffff; /* Must explicitly be white in both modes to contrast the blue bubble */
-		box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-	}
-
-	.btn.primary:hover {
-		background: #1d4ed8;
-		box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
-		transform: translateY(-2px);
-		color: #ffffff;
-	}
-
-	.btn.secondary {
-		background: transparent;
-		color: #1a202c; /* Light mode text */
-		border: 1px solid #cbd5e1;
-	}
-
-	:global(html.dark-theme) .btn.secondary {
-		color: var(--text-main);
-		border-color: var(--card-border);
-	}
-
-	.btn.secondary:hover {
-		background: rgba(0,0,0,0.05);
-		transform: translateY(-2px);
-	}
-
-	:global(html.dark-theme) .btn.secondary:hover {
-		background: rgba(255,255,255,0.05);
-	}
-
-
-
-	/* Projects Section */
-	.projects-section {
-		margin-top: 4rem;
-	}
-
-	.section-title {
-		font-size: 2rem;
-		color: #1a202c; /* light mode */
-		margin-bottom: 2rem;
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	:global(html.dark-theme) .section-title {
-		color: #fff;
-	}
-
-	.section-title::after {
-		content: "";
-		height: 1px;
-		flex: 1;
-		background: linear-gradient(90deg, #e2e8f0, transparent);
-	}
-
-	:global(html.dark-theme) .section-title::after {
-		background: linear-gradient(90deg, var(--card-border), transparent);
-	}
-
-	.section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 2rem;
-		flex-wrap: wrap;
-		gap: 1rem;
-	}
-
-	.section-header .section-title {
-		margin-bottom: 0;
-		flex: 1;
-	}
-
-	.view-all-container {
-		display: flex;
-		justify-content: center;
-		margin-top: 3rem;
-	}
-
-	.view-all-link {
-		color: #3b82f6;
-		font-weight: 600;
-		text-decoration: none;
+	.btn-primary, .btn-outline {
 		display: inline-flex;
 		align-items: center;
-		font-size: 1rem;
-		transition: all 0.3s ease;
-		padding: 0.5rem 1rem;
-		border-radius: 8px;
-		background: rgba(59, 130, 246, 0.1);
+		padding: 0.6rem 1.25rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		border-radius: var(--radius-sm);
+		text-decoration: none;
+		transition: all 150ms ease;
 	}
 
-	.view-all-link:hover {
-		background: rgba(59, 130, 246, 0.2);
-		transform: translateY(-2px);
+	.btn-primary {
+		background: var(--text);
+		color: var(--bg);
 	}
 
-	.view-all-link .arrow {
-		margin-left: 0.5rem;
-		transition: transform 0.3s ease;
+	.btn-primary:hover {
+		background: var(--accent);
+		color: #fff;
+		text-decoration: none;
 	}
 
-	.view-all-link:hover .arrow {
-		transform: translateX(4px);
+	.btn-outline {
+		background: transparent;
+		color: var(--text);
+		border: 1px solid var(--line);
 	}
 
-	.projects-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: 2rem;
+	.btn-outline:hover {
+		background: var(--surface-soft);
+		text-decoration: none;
 	}
 
-	.project-card {
-		background: #ffffff; /* Light mode base */
-		border: 1px solid #e2e8f0;
-		border-radius: 12px;
-		padding: 2rem;
+	/* Sections */
+	.section {
+		padding: var(--space-12) 0;
+	}
+
+	.section-label {
+		font-size: 0.75rem;
+		font-weight: 700;
+		font-family: var(--mono);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--text-muted);
+		margin-bottom: var(--space-6);
+		padding-bottom: var(--space-3);
+		border-bottom: 1px solid var(--line);
+	}
+
+	/* Projects */
+	.projects-list {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		transition: all 0.3s ease;
-		position: relative;
+		gap: 1px;
+		background: var(--line);
+		border-radius: var(--radius-md);
 		overflow: hidden;
+		border: 1px solid var(--line);
 	}
 
-	:global(html.dark-theme) .project-card {
-		background: var(--card-bg);
-		border-color: var(--card-border);
-		backdrop-filter: blur(10px);
+	.project-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-4);
+		padding: var(--space-6);
+		background: var(--surface);
+		text-decoration: none;
+		color: var(--text);
 	}
 
-	.project-card::before {
-		content: "";
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 4px;
-		background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-		opacity: 0;
-		transition: opacity 0.3s ease;
+	.project-row:hover {
+		background: var(--surface-soft);
+		text-decoration: none;
 	}
 
-	.project-card:hover {
-		transform: translateY(-5px);
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-		border-color: rgba(59, 130, 246, 0.3);
+	.project-info h3 {
+		margin-bottom: var(--space-2);
 	}
 
-	:global(html.dark-theme) .project-card:hover {
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-	}
-
-	.project-card:hover::before {
-		opacity: 1;
-	}
-
-	.project-card h4 {
-		font-size: 1.4rem;
-		color: #1d4ed8; /* distinct blue for project headers in light mode */
-		margin-bottom: 1rem;
-	}
-	
-	:global(html.dark-theme) .project-card h4 {
-		color: #fff;
-	}
-
-	.project-card p {
-		color: #334155; /* explicit dark color for readability */
-		font-size: 0.95rem;
-		line-height: 1.5;
-		margin-bottom: 1.5rem;
-	}
-
-	:global(html.dark-theme) .project-card p {
-		color: var(--text-muted);
+	.project-info p {
+		margin-bottom: var(--space-3);
+		font-size: 0.9rem;
 	}
 
 	.tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-bottom: 1.5rem;
+		gap: var(--space-2);
 	}
 
 	.tag {
-		background: rgba(59, 130, 246, 0.1);
-		color: #93c5fd;
-		padding: 0.3rem 0.8rem;
-		border-radius: 20px;
-		font-size: 0.8rem;
-		font-weight: 500;
-		border: 1px solid rgba(59, 130, 246, 0.2);
+		font-family: var(--mono);
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 0.2rem 0.5rem;
+		border-radius: var(--radius-pill);
+		background: var(--accent-muted);
+		color: var(--accent);
 	}
 
-	.card-action {
-		margin-top: auto;
-		padding-top: 1rem;
-		border-top: 1px solid #e2e8f0;
+	.project-arrow {
+		font-size: 1.25rem;
+		color: var(--text-muted);
+		flex-shrink: 0;
+		transition: transform 150ms ease;
 	}
 
-	:global(html.dark-theme) .card-action {
-		border-top-color: var(--card-border);
+	.project-row:hover .project-arrow {
+		transform: translateX(4px);
+		color: var(--accent);
 	}
 
-	.view-project {
-		color: #1e293b; /* Light mode interaction */
-		text-decoration: none;
+	.see-all {
+		display: inline-block;
+		margin-top: var(--space-4);
+		font-size: 0.875rem;
 		font-weight: 600;
-		font-size: 0.9rem;
-		display: inline-flex;
+		color: var(--accent);
+		text-decoration: none;
+	}
+
+	.see-all:hover {
+		text-decoration: underline;
+	}
+
+	/* Contact */
+	.contact-grid {
+		display: grid;
+		grid-template-columns: 180px 1fr;
+		gap: var(--space-8);
+		align-items: start;
+	}
+
+	.contact-photo-wrap {
+		position: sticky;
+		top: calc(3.5rem + var(--space-6));
+	}
+
+	.contact-photo {
+		width: 100%;
+		aspect-ratio: 1;
+		object-fit: cover;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--line);
+	}
+
+	.contact-links {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		background: var(--line);
+		border-radius: var(--radius-md);
+		overflow: hidden;
+		border: 1px solid var(--line);
+	}
+
+	.contact-row {
+		display: grid;
+		grid-template-columns: 90px 1fr auto;
+		gap: var(--space-3);
 		align-items: center;
-		transition: color 0.3s ease;
+		padding: var(--space-4) var(--space-6);
+		background: var(--surface);
+		text-decoration: none;
+		color: var(--text);
 	}
 
-	:global(html.dark-theme) .view-project {
-		color: #fff;
+	.contact-row:hover {
+		background: var(--surface-soft);
+		text-decoration: none;
 	}
 
-	.view-project .arrow {
-		margin-left: 0.5rem;
-		transition: transform 0.3s ease;
+	.contact-key {
+		font-family: var(--mono);
+		font-size: 0.78rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--text);
 	}
 
-	.view-project:hover {
-		color: var(--accent-glow);
+	.contact-val {
+		font-size: 0.875rem;
+		color: var(--text-muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	.view-project:hover .arrow {
-		transform: translateX(5px);
+	.contact-arr {
+		color: var(--text-muted);
+		font-size: 0.9rem;
+		transition: transform 150ms ease;
+	}
+
+	.contact-row:hover .contact-arr {
+		transform: translateX(3px);
+		color: var(--accent);
 	}
 
 	@media (max-width: 768px) {
 		main {
-			padding: 2rem 1.25rem;
-			width: 100%;
-			box-sizing: border-box;
+			padding: var(--space-8) var(--page-pad) var(--space-12);
 		}
+
 		.hero {
-			flex-direction: column;
-			text-align: center;
-			margin-bottom: 3rem;
-			min-height: auto;
-			padding-top: 2rem;
-			width: 100%;
+			padding: var(--space-12) 0 var(--space-10);
 		}
+
+		.hero {
+			text-align: center;
+			align-items: center;
+		}
+
+		.hero h1 {
+			max-width: 100%;
+		}
+
+		.hero-sub {
+			max-width: 100%;
+		}
+
 		.hero-actions {
 			flex-direction: column;
-			gap: 0.75rem;
+			gap: var(--space-2);
 			width: 100%;
-			max-width: 260px; /* Slightly narrower for better fit */
-			margin: 0 auto; /* CENTER the buttons */
+			max-width: 260px;
+			margin: 0 auto;
 		}
-		.btn {
-			width: 100%;
+
+		.btn-primary, .btn-outline {
 			text-align: center;
-			padding: 0.8rem 1.2rem;
-			box-sizing: border-box;
-		}
-		.hero-graphic {
-			display: none;
-		}
-		.hero h1 {
-			font-size: 2.2rem;
-			word-break: break-word;
-			padding: 0 0.5rem;
-		}
-		.hero h2 {
-			font-size: 1.3rem;
-			padding: 0 1rem;
-		}
-		.hero p {
-			font-size: 1rem;
-			padding: 0 1.5rem;
-		}
-		.projects-grid {
-			grid-template-columns: 1fr;
-			gap: 1.5rem;
-			padding: 0 0.5rem; /* Space on sides of cards */
-		}
-		.project-card {
-			padding: 1.5rem;
+			justify-content: center;
 			width: 100%;
-			box-sizing: border-box;
+		}
+
+		.contact-grid {
+			grid-template-columns: 1fr;
+			gap: var(--space-6);
+		}
+
+		.contact-photo-wrap {
+			position: static;
+			max-width: 140px;
+		}
+
+		.contact-row {
+			grid-template-columns: 1fr auto;
+			gap: var(--space-2);
+		}
+
+		.contact-key {
+			grid-column: 1 / -1;
+		}
+
+		.contact-val {
+			white-space: normal;
 		}
 	}
 </style>

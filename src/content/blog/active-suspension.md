@@ -3,6 +3,7 @@ title: 'Active Suspension HIL Simulation (Python + CODESYS)'
 description: 'How I built a Hardware-in-the-Loop testbench from scratch to bridge Python physics with an industrial SoftPLC.'
 pubDate: '10 January 2026'
 heroImage: '../../assets/active-suspension.jpg'
+github: 'https://github.com/justkuchkorov/active-suspension-hil'
 ---
 
 

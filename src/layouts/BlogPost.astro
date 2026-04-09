@@ -18,40 +18,109 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
 		<style>
 			main {
-				width: 100%;
-				max-width: 100%;
-				margin: 0 auto;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 100%;
 				max-width: 720px;
-				margin: auto;
-				padding: 1em;
+				margin: 0 auto;
+				padding: var(--space-10) var(--page-pad) var(--space-16);
 			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
+
+			.hero-image {
+				margin-bottom: var(--space-8);
 			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
+
+			.hero-image img {
+				width: 100%;
+				max-height: 420px;
+				object-fit: cover;
+				border-radius: var(--radius-md);
+				display: block;
 			}
-			.date {
-				margin-bottom: 0.5em;
+
+			.article-header {
+				margin-bottom: var(--space-10);
+				padding-bottom: var(--space-6);
+				border-bottom: 1px solid var(--line);
+			}
+
+			.article-meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--space-3);
+				align-items: center;
+				font-size: 0.8rem;
+				font-family: var(--mono);
+				color: var(--text-muted);
+				margin-bottom: var(--space-4);
+			}
+
+			.article-header h1 {
+				margin-bottom: var(--space-3);
+				line-height: 1.2;
+			}
+
+			.article-header .description {
+				font-size: 1.02rem;
+				color: var(--text-muted);
+				line-height: 1.65;
+				max-width: 600px;
+				margin: 0;
+			}
+
+			/* Prose */
+			.prose > :first-child {
+				margin-top: 0;
+			}
+
+			.prose h2, .prose h3, .prose h4 {
+				margin-top: 2.5rem;
+				margin-bottom: 0.75rem;
+			}
+
+			.prose p, .prose li {
+				font-size: 1rem;
+				line-height: 1.8;
 				color: var(--text-muted);
 			}
+
+			.prose ul, .prose ol {
+				padding-left: 1.2rem;
+				margin: 0 0 var(--space-6);
+			}
+
+			.prose li + li {
+				margin-top: 0.4rem;
+			}
+
+			.prose strong {
+				color: var(--text);
+			}
+
+			.prose a {
+				text-decoration: underline;
+				text-decoration-color: rgba(37, 99, 235, 0.3);
+				text-underline-offset: 2px;
+			}
+
+			.prose a:hover {
+				text-decoration-color: var(--accent);
+			}
+
 			.last-updated-on {
-				font-style: italic;
+				font-style: normal;
+			}
+
+			@media (max-width: 720px) {
+				main {
+					padding: var(--space-8) var(--page-pad) var(--space-12);
+				}
+
+				.hero-image img {
+					max-height: 280px;
+				}
+
+				.article-meta {
+					flex-direction: column;
+					align-items: flex-start;
+				}
 			}
 		</style>
 	</head>
@@ -60,274 +129,232 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<Header />
 		<main>
 			<article>
-				<div class="hero-image">
-					{heroImage && (
-						typeof heroImage === 'string' ? 
-						<img width={1020} height={510} src={heroImage} alt="" /> :
-						<Image width={1020} height={510} src={heroImage} alt="" />
-					)}
+				{heroImage && (
+					<div class="hero-image">
+						{typeof heroImage === 'string'
+							? <img width={1020} height={510} src={heroImage} alt="" />
+							: <Image width={1020} height={510} src={heroImage} alt="" />
+						}
+					</div>
+				)}
+				<div class="article-header">
+					<div class="article-meta">
+						<FormattedDate date={pubDate} />
+						{updatedDate && (
+							<span class="last-updated-on">
+								&middot; Updated <FormattedDate date={updatedDate} />
+							</span>
+						)}
+					</div>
+					<h1>{title}</h1>
+					<p class="description">{description}</p>
 				</div>
 				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
 					<slot />
 				</div>
 			</article>
 		</main>
 		<Footer />
 		<Analytics />
+
 		<style is:global>
-  /* 1. Force the Astro container to allow absolute positioning */
-  pre.astro-code {
-    position: relative !important;
-    padding-top: 2.5rem !important; /* Make room for the copy button */
-  }
+			/* Code block features */
+			pre.astro-code {
+				position: relative !important;
+				padding-top: 2.5rem !important;
+				border-radius: var(--radius-md) !important;
+				border: 1px solid var(--line) !important;
+			}
 
-  /* 2. The Copy Button */
-  .abdi-copy-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #e5e7eb;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    z-index: 10;
-    transition: 0.2s ease;
-  }
-  .abdi-copy-btn:hover { background: rgba(255, 255, 255, 0.2); }
+			.abdi-copy-btn {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				background: rgba(255, 255, 255, 0.1);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				color: #e5e7eb;
+				padding: 3px 8px;
+				border-radius: 4px;
+				font-size: 0.72rem;
+				cursor: pointer;
+				z-index: 10;
+				transition: 0.15s ease;
+			}
 
-  /* 3. The Collapsed State */
-  pre.astro-code.is-collapsed {
-    max-height: 350px !important;
-    overflow: hidden !important;
-  }
+			.abdi-copy-btn:hover {
+				background: rgba(255, 255, 255, 0.2);
+			}
 
-  /* 4. The Perfect Gradient Fade */
-  pre.astro-code.is-collapsed::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    /* Uses the dynamic variable we set in JS, falls back to dark gray */
-    background: linear-gradient(to bottom, transparent, var(--shiki-bg, #1f2937));
-    pointer-events: none;
-  }
+			pre.astro-code.is-collapsed {
+				max-height: 350px !important;
+				overflow: hidden !important;
+			}
 
-  /* 5. The Show More / Show Less Button */
-  .abdi-show-more, .abdi-show-less {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  }
-  .abdi-show-more:hover { background: #2563eb; }
-  
-  .abdi-show-less {
-    display: none;
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #475569;
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  }
-  .abdi-show-less:hover { background: #334155; }
+			pre.astro-code.is-collapsed::after {
+				content: "";
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 100px;
+				background: linear-gradient(to bottom, transparent, var(--shiki-bg, #1f2937));
+				pointer-events: none;
+			}
 
-  /* Ensure the container transitions smoothly */
-  pre.astro-code {
-    transition: max-height 0.3s ease-in-out;
-  }
+			.abdi-show-more, .abdi-show-less {
+				position: absolute;
+				bottom: 12px;
+				left: 50%;
+				transform: translateX(-50%);
+				color: white;
+				border: none;
+				padding: 5px 14px;
+				border-radius: var(--radius-pill);
+				font-size: 0.8rem;
+				font-weight: 600;
+				cursor: pointer;
+				z-index: 20;
+			}
 
-  /* Lightbox Styles */
-  #lightbox-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 1000;
-    cursor: zoom-out;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-  }
+			.abdi-show-more {
+				background: var(--accent, #2563eb);
+			}
 
-  #lightbox-overlay img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 4px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  }
-</style>
+			.abdi-show-more:hover {
+				filter: brightness(0.9);
+			}
 
-<script is:inline>
-  // Define the logic in a reusable function
-  function initCodeBlocks() {
-    // Target Astro's exact output class
-    const codeBlocks = document.querySelectorAll('pre.astro-code');
+			.abdi-show-less {
+				display: none;
+				background: #475569;
+			}
 
-    codeBlocks.forEach((pre) => {
-      // Stop it from duplicating buttons on page changes
-      if (pre.querySelector('.abdi-copy-btn')) return;
+			.abdi-show-less:hover {
+				background: #334155;
+			}
 
-      // --- INJECT COPY BUTTON ---
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'abdi-copy-btn';
-      copyBtn.innerText = 'Copy';
-      
-      copyBtn.onclick = async () => {
-        // Target the inner code tag so we only get pure Python text
-        const codeElement = pre.querySelector('code');
-        const textToCopy = codeElement ? codeElement.innerText : pre.innerText;
-        
-        await navigator.clipboard.writeText(textToCopy.trim());
-        copyBtn.innerText = 'Copied!';
-        copyBtn.style.background = '#10b981'; // Green
-        copyBtn.style.borderColor = '#10b981';
-        
-        setTimeout(() => {
-          copyBtn.innerText = 'Copy';
-          copyBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-          copyBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        }, 2000);
-      };
-      
-      pre.appendChild(copyBtn);
+			pre.astro-code {
+				transition: max-height 0.3s ease-in-out;
+			}
 
-      // --- INJECT COLLAPSE LOGIC ---
-      // Wait 150ms for the browser to finish rendering the fonts
-      setTimeout(() => {
-        if (pre.scrollHeight > 400) {
-          pre.classList.add('is-collapsed');
-          
-          // Read Shiki's exact background color and give it to CSS for a seamless gradient
-          const exactBgColor = window.getComputedStyle(pre).backgroundColor;
-          pre.style.setProperty('--shiki-bg', exactBgColor);
-          
-          const showBtn = document.createElement('button');
-          showBtn.className = 'abdi-show-more';
-          showBtn.innerText = 'Show More';
+			/* Lightbox */
+			#lightbox-overlay {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.92);
+				z-index: 1000;
+				cursor: zoom-out;
+				justify-content: center;
+				align-items: center;
+				padding: 20px;
+			}
 
-          const lessBtn = document.createElement('button');
-          lessBtn.className = 'abdi-show-less';
-          lessBtn.innerText = 'Show Less';
-          lessBtn.style.display = 'none';
-          
-          showBtn.onclick = () => {
-            pre.classList.remove('is-collapsed');
-            showBtn.style.display = 'none';
-            lessBtn.style.display = 'block';
-          };
+			#lightbox-overlay img {
+				max-width: 100%;
+				max-height: 100%;
+				object-fit: contain;
+				border-radius: 4px;
+			}
+		</style>
 
-          lessBtn.onclick = () => {
-            pre.classList.add('is-collapsed');
-            lessBtn.style.display = 'none';
-            showBtn.style.display = 'block';
-            
-            // Scroll back up so the user isn't lost at the bottom of the long block
-            const headerOffset = 100;
-            const elementPosition = pre.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            
-            window.scrollTo({
-                 top: offsetPosition,
-                 behavior: "smooth"
-            });
-          };
-          
-          pre.appendChild(showBtn);
-          pre.appendChild(lessBtn);
-        }
-      }, 150);
-    });
-  }
+		<script is:inline>
+			function initCodeBlocks() {
+				const codeBlocks = document.querySelectorAll('pre.astro-code');
+				codeBlocks.forEach((pre) => {
+					if (pre.querySelector('.abdi-copy-btn')) return;
 
-  function initLightbox() {
-    let overlay = document.getElementById('lightbox-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'lightbox-overlay';
-      overlay.innerHTML = '<img src="" alt="Zoomed view" />';
-      document.body.appendChild(overlay);
-      
-      overlay.onclick = () => {
-        overlay.style.display = 'none';
-        document.body.style.overflow = 'auto';
-      };
-    }
+					const copyBtn = document.createElement('button');
+					copyBtn.className = 'abdi-copy-btn';
+					copyBtn.innerText = 'Copy';
+					copyBtn.onclick = async () => {
+						const codeEl = pre.querySelector('code');
+						const text = codeEl ? codeEl.innerText : pre.innerText;
+						await navigator.clipboard.writeText(text.trim());
+						copyBtn.innerText = 'Copied!';
+						copyBtn.style.background = '#10b981';
+						copyBtn.style.borderColor = '#10b981';
+						setTimeout(() => {
+							copyBtn.innerText = 'Copy';
+							copyBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+							copyBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+						}, 2000);
+					};
+					pre.appendChild(copyBtn);
 
-    const prose = document.querySelector('.prose');
-    if (!prose) return;
+					setTimeout(() => {
+						if (pre.scrollHeight > 400) {
+							pre.classList.add('is-collapsed');
+							const bg = window.getComputedStyle(pre).backgroundColor;
+							pre.style.setProperty('--shiki-bg', bg);
 
-    // Use event delegation for better reliability
-    prose.onclick = (e) => {
-      const img = e.target.closest('img');
-      if (img && !img.closest('.hero-image')) {
-        overlay.querySelector('img').src = img.src;
-        overlay.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
-    };
+							const showBtn = document.createElement('button');
+							showBtn.className = 'abdi-show-more';
+							showBtn.innerText = 'Show More';
 
-    // Set cursor for all images in prose
-    const images = prose.querySelectorAll('img');
-    images.forEach(img => {
-      if (!img.closest('.hero-image')) {
-        img.style.cursor = 'zoom-in';
-      }
-    });
-  }
+							const lessBtn = document.createElement('button');
+							lessBtn.className = 'abdi-show-less';
+							lessBtn.innerText = 'Show Less';
+							lessBtn.style.display = 'none';
 
-  // Run on initial load
-  initCodeBlocks();
-  initLightbox();
-  
-  // Run on subsequent client-side navigations
-  document.addEventListener('astro:after-swap', () => {
-    initCodeBlocks();
-    initLightbox();
-  });
-  // Also run on page load just in case
-  window.addEventListener('load', initLightbox);
-</script>
+							showBtn.onclick = () => {
+								pre.classList.remove('is-collapsed');
+								showBtn.style.display = 'none';
+								lessBtn.style.display = 'block';
+							};
+
+							lessBtn.onclick = () => {
+								pre.classList.add('is-collapsed');
+								lessBtn.style.display = 'none';
+								showBtn.style.display = 'block';
+								const offset = pre.getBoundingClientRect().top + window.pageYOffset - 100;
+								window.scrollTo({ top: offset, behavior: 'smooth' });
+							};
+
+							pre.appendChild(showBtn);
+							pre.appendChild(lessBtn);
+						}
+					}, 150);
+				});
+			}
+
+			function initLightbox() {
+				let overlay = document.getElementById('lightbox-overlay');
+				if (!overlay) {
+					overlay = document.createElement('div');
+					overlay.id = 'lightbox-overlay';
+					overlay.innerHTML = '<img src="" alt="Zoomed view" />';
+					document.body.appendChild(overlay);
+					overlay.onclick = () => {
+						overlay.style.display = 'none';
+						document.body.style.overflow = 'auto';
+					};
+				}
+
+				const prose = document.querySelector('.prose');
+				if (!prose) return;
+
+				prose.onclick = (e) => {
+					const img = e.target.closest('img');
+					if (img && !img.closest('.hero-image')) {
+						overlay.querySelector('img').src = img.src;
+						overlay.style.display = 'flex';
+						document.body.style.overflow = 'hidden';
+					}
+				};
+
+				prose.querySelectorAll('img').forEach(img => {
+					if (!img.closest('.hero-image')) img.style.cursor = 'zoom-in';
+				});
+			}
+
+			initCodeBlocks();
+			initLightbox();
+			document.addEventListener('astro:after-swap', () => { initCodeBlocks(); initLightbox(); });
+			window.addEventListener('load', initLightbox);
+		</script>
 	</body>
 </html>

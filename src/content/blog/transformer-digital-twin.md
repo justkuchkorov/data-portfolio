@@ -3,6 +3,7 @@ title: 'Transformer Digital Twin: Closed-Loop Thermal Simulation'
 description: 'This is a closed-loop digital twin built to stress-test industrial PLC safety logic before deploying it to physical hardware.'
 pubDate: '15 March 2026'
 heroImage: '../../assets/transformer.jpg'
+github: 'https://github.com/justkuchkorov/transformer_digital_twin'
 ---
 
 #### The Small Introduction

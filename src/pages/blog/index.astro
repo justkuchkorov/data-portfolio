@@ -19,85 +19,212 @@ const posts = (await getCollection('blog')).sort(
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
 			main {
-				width: 100%;
-				max-width: 960px;
+				max-width: var(--page-width);
 				margin: 0 auto;
-				padding: 3rem 1.5rem;
+				padding: var(--space-12) var(--page-pad) var(--space-16);
 			}
-			ul {
+
+			.page-head {
+				margin-bottom: var(--space-10);
+			}
+
+			.page-head h1 {
+				margin-bottom: var(--space-2);
+			}
+
+			.page-head p {
+				max-width: 520px;
+				font-size: 0.95rem;
+			}
+
+			.posts-list {
 				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
+				flex-direction: column;
+				gap: 1px;
+				background: var(--line);
+				border: 1px solid var(--line);
+				border-radius: var(--radius-md);
+				overflow: hidden;
+				list-style: none;
 				margin: 0;
 				padding: 0;
 			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
+
+			.post-row {
+				display: grid;
+				grid-template-columns: 200px 1fr;
+				gap: var(--space-6);
+				align-items: center;
+				padding: var(--space-6);
+				background: var(--surface);
 				text-decoration: none;
-				transition: 0.2s ease;
+				color: var(--text);
+				transition: background 120ms ease;
 			}
 
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
+			.post-row:hover {
+				background: var(--surface-soft);
 			}
-			ul li a {
+
+			.post-thumb {
+				width: 100%;
+				height: 130px;
+				object-fit: cover;
+				border-radius: var(--radius-sm);
 				display: block;
 			}
-			.title {
-				margin: 0;
-				line-height: 1;
+
+			.post-thumb-placeholder {
+				width: 100%;
+				height: 130px;
+				border-radius: var(--radius-sm);
+				background: var(--surface-soft);
+				border: 1px dashed var(--line);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 0.75rem;
+				color: var(--text-muted);
+				font-family: var(--mono);
 			}
-			.date {
-				margin: 0;
+
+			.post-content {
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-2);
+				min-width: 0;
+			}
+
+			.post-meta {
+				display: flex;
+				align-items: center;
+				gap: var(--space-3);
+				font-size: 0.75rem;
+				font-family: var(--mono);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
 				color: var(--text-muted);
 			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: var(--accent-glow);
+
+			.post-label {
+				color: var(--accent);
+				font-weight: 700;
 			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
+
+			.post-content h3 {
+				margin: 0;
+				line-height: 1.3;
+				font-size: clamp(1rem, 1.5vw, 1.15rem);
 			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
+
+			.post-desc {
+				margin: 0;
+				font-size: 0.88rem;
+				color: var(--text-muted);
+				line-height: 1.55;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+
+			.post-actions {
+				display: flex;
+				gap: var(--space-6);
+				align-items: center;
+				margin-top: var(--space-1);
+			}
+
+			.post-link, .post-github {
+				font-size: 0.78rem;
+				font-weight: 600;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.3rem;
+				text-decoration: none;
+			}
+
+			.post-link {
+				color: var(--accent);
+			}
+
+			.post-github {
+				color: var(--text-muted);
+			}
+
+			.post-link:hover, .post-github:hover {
+				text-decoration: none;
+			}
+
+			.post-link span, .post-github span {
+				transition: transform 150ms ease;
+			}
+
+			.post-row:hover .post-link span {
+				transform: translateX(3px);
+			}
+
+			.post-github:hover span {
+				transform: translateX(3px);
+			}
+
+			@media (max-width: 640px) {
+				.post-row {
+					grid-template-columns: 1fr;
+					gap: var(--space-4);
 				}
 
+				.post-thumb {
+					height: 180px;
+				}
+
+				.post-thumb-placeholder {
+					height: 100px;
+				}
 			}
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										typeof post.data.heroImage === 'string' ?
-										<img width={720} height={360} src={post.data.heroImage} alt="" /> :
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
+			<div class="page-head">
+				<h1>Articles</h1>
+				<p>Technical breakdowns, engineering decisions, and control logic behind the builds.</p>
+			</div>
+
+			<ul class="posts-list">
+				{
+					posts.map((post) => (
+						<li>
+							<div class="post-row">
+								{post.data.heroImage ? (
+									typeof post.data.heroImage === 'string' && post.data.heroImage !== ''
+										? <img class="post-thumb" width={400} height={260} src={post.data.heroImage} alt="" />
+										: typeof post.data.heroImage !== 'string'
+											? <Image class="post-thumb" width={400} height={260} src={post.data.heroImage} alt="" />
+											: <div class="post-thumb-placeholder">No image</div>
+								) : (
+									<div class="post-thumb-placeholder">No image</div>
+								)}
+								<div class="post-content">
+									<div class="post-meta">
+										<span class="post-label">Article</span>
 										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
+									</div>
+									<h3>{post.data.title}</h3>
+									<p class="post-desc">{post.data.description}</p>
+									<div class="post-actions">
+										<a href={`/blog/${post.id}/`} class="post-link">Read article <span>&rarr;</span></a>
+										{post.data.github && (
+											<a href={post.data.github} class="post-github" target="_blank" rel="noopener noreferrer">GitHub <span>&rarr;</span></a>
+										)}
+									</div>
+								</div>
+							</div>
+						</li>
+					))
+				}
+			</ul>
 		</main>
 		<Footer />
 		<Analytics />

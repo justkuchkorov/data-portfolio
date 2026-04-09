@@ -3,6 +3,7 @@ title: 'HIL Drive-by-Wire Simulation (Python + CODESYS)'
 description: 'Building a real-time Hardware-in-the-Loop testbench connecting a physical steering wheel to an industrial SoftPLC.'
 pubDate: '26 December 2025'
 heroImage: '../../assets/engine.png' 
+github: 'https://github.com/justkuchkorov/HIL-Drive-By-Wire-Sim'
 ---
 <style>
   .hero-image img {
