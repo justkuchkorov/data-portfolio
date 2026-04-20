@@ -1,7 +1,7 @@
 ---
 title: 'Transformer Digital Twin: Closed-Loop Thermal Simulation'
-description: 'This is a closed-loop digital twin built to stress-test industrial PLC safety logic before deploying it to physical hardware.'
-pubDate: '15 March 2026'
+description: 'A closed-loop digital twin built to stress-test industrial PLC safety logic — upgraded from bang-bang to PID control with real physics.'
+pubDate: '19 April 2026'
 heroImage: '../../assets/transformer.jpg'
 github: 'https://github.com/justkuchkorov/transformer_digital_twin'
 ---
@@ -10,7 +10,7 @@ github: 'https://github.com/justkuchkorov/transformer_digital_twin'
 As you know, since I am building my portfolio based website, I am trying to make projects which are related to, especially, automation. And I know that my lots of projects have connections with *Python* and *CODESYS SoftPLC* which can make the website or projects are quite boring. So, this project you are reading are also based on that **free** and **open-source weapons**. 
 
 #### The Starting Point
-I am a *senior* year student at the university, if we do not count or consider that semester, I have one semester to graduate the Bachelor degree. Thus, I am trying to impress HR managers with my ***"cool"*** projects. When I found that Siemens Energy has a vacancy for Engineering Intern, I said, I have to make some project which is related to their massion to achieve or solve. **Transformer Digital Twin** was it.
+I am a *senior* year student at the university, if we do not count or consider that semester, I have one semester to graduate the Bachelor degree. Thus, I am trying to impress HR managers with my ***"cool"*** projects. When I found that Siemens Energy has a vacancy for Engineering Intern, I said, I have to make some project which is related to their mission to achieve or solve. **Transformer Digital Twin** was it.
 
 #### What Is It?
 The full name of this project is **Transformer Digital Twin: Closed-Loop Thermal Simulation** as you see it in the headline. Before explanation about this project, I wanna talk a little about closed and open loop difference. There is only one requirement which differs each other. It is "closed-loop" if a system uses ***feedback*** to make decisions.<br>
@@ -19,92 +19,188 @@ The full name of this project is **Transformer Digital Twin: Closed-Loop Thermal
 
 It is the **real-world problem**. Namely, big companies, like Siemens Energy which specializes in energy, always encounters that problem. It is simply about preventing *transformers* getting really hot. Due to fact that high-voltage transformers are the massive metal boxes and when electricity flows through it, the copper coils generate extreme hot. Not to explode a transformer from heating, a transformer has massive *cooling fans* to cool down and a **PLC** (brain) monitors the temperature and decides whether turns on fans or not.
 
-#### Building The Project
-The purpose of building simulation for that transformer is not loose $5 million transformer by overheating it and check it on the simulation mode whether I am on right track or not. Of course, as a broke student, I cannot afford a PLC brain. That's why I used above mentioned apps which are **Python** and **CODESYS SoftPLC**. 
+#### The Architecture
 
-- What my ***My Python Script*** does? - It is **the virtual version of physical transformer**. This python script pretends to be a transformer which experiences heating while increasing demands in the city.
-- What is the role of ***CODESYS SoftPLC*** ? - It plays the role of **control cabinet**. It reads the fake temperature from python, runs the safety logic and send the command: *"90°C => turning on the emergency fans."*
-- My "copper wires": ***The Modbus TCP/IP***. - It is the communication cable between the temp sensors to the PLC.
-- My Engineering validation report: ***Power BI Dashboard***. - It represents the data we collect during running simulation. It gets the info from python which PLC sends and shows in the graph format.
+The whole system has three big pieces talking to each other:
 
-#### Python Code
-**PYTHON. THANKS TO GOD, WE HAVE PYTHON IN THE WORLD!**
+```
+Python Digital Twin          Modbus TCP/IP (port 502)          CODESYS SoftPLC
++---------------------+     Hold Regs (×100 scaled)     +-------------------------+
+| First-order thermal |  --- Oil Temp, Load%, Ambient -> | PID controller          |
+| model (ODE-based)   |  <-- Fan1, Fan2, Speed, Alarms -| Watchdog timer          |
+|                     |                                  | Rate-of-rise alarm      |
+| Heat in: I²R + core |                                  | Staged fan control      |
+| Heat out: ONAN+fans |                                  | Critical alarm + reset  |
++----------+----------+                                  +-------------------------+
+           |
+           v
+  +--------------------+
+  | Live Dashboard     |
+  | (4-panel real-time)|
+  | + Post-run analysis|
+  | + Power BI push    |
+  +--------------------+
+```
 
-Before explaining python codes, I wanna tell about what overall this code does?<br>
-&bull; generating *fake electrical load* ;<br>
-&bull; simulating *temperature physics* ;<br>
-&bull; reading *fan + alarm states from PLC* ;<br>
-&bull; writing *temperature + load back to PLC* ;<br>
-&bull; logging every data to *CSV* .<br>
-
-\- **Core Logic - Physics Constants** -<br>
-There are 5 constant variables which are related to temperature and they are totally **fake constants!** And there are:<br>
-&bull; **`T_AMBIENT`** - ambient temperature (room temperature).<br>
-&bull; **`K_HEAT`** - heat generated per load unit. If it is higher value, it heats faster.<br>
-&bull; **`K_COOL1`** and **K_COOL2** - cooling strength of fans. `F2` is stronger than `F1`.<br>
-&bull; **`K_LOSS`** - natural cooling. It means that heat loss to environment.<br>
-
-\- **Simulation State Variables** -<br>
-There are 5 constant variables which are related to temperature and they are totally **fake constants!** And there are:<br>
-&bull; **`current_temp`** - current transformer temperature.<br>
-&bull; **`load_percent`** - initial load. It is starting value.<br>
-&bull; **`iteration`** - time step counter. It is used to simulate changing load over time.<br>
-
-\- **Load Simulation Function** - <br>
-&bull; **`def get_simulated_load(t):`** - generates fake load in a transformer.<br>
-&bull; **`base_load = 67.5`** and **`amplitude = 27.5`** - load oscillates between `40%` and `95%`.<br>
-&bull; **`math.sin(t / 120.0)`** - it is slow sine wave. This triggers long-term variation.<br>
-&bull; **`jitter = ...`** - it is for small fluctuations to avoid smooth curve.<br>
-
-\- **Digital Twin Equation** -<br>
-&bull; **`heat_gain = get_simulated_load(iteration) * K_HEAT`** - heat generates from load.<br>
-&bull; **`cool_loss = (fan1 * K_COOL1) + (fan2 * K_COOL2)`** - cooling process from fans.<br>
-&bull; **`ambient_loss = (current_temp - T_AMBIENT) * K_LOSS`** - natural cooling.<br>
-&bull; **`current_temp = current_temp + heat_gain - cool_loss - ambient_loss`** - and it is the final digital twin equation.<br>
-
-\- **Why Isn't It Perfecto?** - <br>
-Actually, there are some steps to improve and be a perfect simulation in python code. Let's start with *temperature*. Here *temperature* is too simple and no thermal inertia modeling which take some time to implement. Secondly, my *CSV*, for now, is writing data from python in every second, which may be inefficient (and to fix it is not big deal). Finally, everything is in *one script* which is not scalable and it may be uncomfortable for an user.
+- **Python** pretends to be a ~630 kVA oil-immersed transformer — generates heat, feels cooling, reports temperature.
+- **CODESYS SoftPLC** is the brain — reads temperature, runs PID math, commands the fans.
+- **Modbus TCP/IP** is the copper wire between them — port 502, registers scaled ×100 for 0.01°C precision.
+- **Dashboard** shows everything live — temperatures, load, fan states, alarms.
 
 ---
 
-#### The Brain - PLC
-![PLC Variables for Transformer Digital Twin](../../assets/plc_transformer_1.png)
+#### The Big Upgrade: From Bang-Bang to PID
 
-**- Which Controller Did I Use? -**<br>
-I wrote the code with the controller called **Bang-Bang Controller**. What is difference between two controllers, actually?<br>
-&bull; **`Proportional (P) Controller`** acts like a *dimmer switch*. If the temp is a little high, it turns the fan on at `10%` speed. If the temp is very high, it spins the fan at `100%` speed. It requires an *analog output* (e.g., a 4-20mA signal or a 0-10V signal). <br>
-&bull; **`Bang-Bang Controller`** acts like a light switch. The fan is either 100% **ON** or 100% **OFF**. 
-I chose the easiest one for now, and I hope I will improve this system to **PID** controller :) <br>
+In the first version of this project, I used a **Bang-Bang Controller**. It is like a light switch — fan is either **100% ON** or **100% OFF**. Simple? Yes. But it creates ugly sawtooth oscillations in the temperature graph.
 
-![PLC Code for Transformer Digital Twin](../../assets/plc_transformer2.png)
+So I said, let me upgrade this thing to something *real engineers* use: **PID control**.
 
-**- PLC Logic -**<br>
-As I chose *Bang-Bang* controller, I did not spend lots of time for PLC code part. It was quite simple. I just needed to declare **IF** statements to choose one choice between two states.<br>
-&bull; **`IF Simulated_Temp >= 75 THEN`** - turns Fan 1 stage on.<br>
-&bull; **`ELSIF Simulated_Temp <= 70 THEN`** - does not turns Fan 1 stage on.<br>
-&bull; **`IF Simulated_Temp >= 90 THEN`** - turns Fan 2 stage on.<br>
-&bull; **`ELSIF Simulated_Temp <= 85 THEN`** - does not turns Fan 2 stage on.<br>
-&bull; **`IF Simulated_Temp >= 105 THEN`** - a critical alarm turns on and it notices us that a transformer gets overheating.<br>
+**What is PID?** Three letters, three jobs:<br>
+&bull; **`P (Proportional)`** — the bigger the error, the harder you push. If temp is 5°C above setpoint, push harder than if it is 1°C above.<br>
+&bull; **`I (Integral)`** — accumulated error over time. If the system stubbornly stays 2°C high for a long time, the integral builds up and forces more action.<br>
+&bull; **`D (Derivative)`** — rate of change. If temperature is *rising fast*, react early before it gets worse.<br>
 
-#### Result of the Simulation (In The Graph)
-![Power Bi Graph](../../assets/graph_power_bi.png)
-#### The Engineering Story
-1. **The Heat Up (4:33 PM - 4:35 PM)**
-Look at the far left. The **orange line** (Grid Load) shoots up from *60%* to almost *90%*. Because the load is high, the dark **blue line** (Transformer Core Temperature) climbs aggressively. There are no **light blue** bars, which means the fans are completely off. The PLC is watching and waiting.
-2. **The Intervention (4:35 PM)**
-Right around 4:35 PM, the **dark blue line** hits that magical *75°C* threshold. The solid wall of **light blue** bars appears. CODESYS SoftPLC detected the danger, executed ST logic, fired the Modbus command over *Port 502*, and turned the fan on.
-3. **The Hysteresis "Sawtooth" (4:40 PM - 4:46 PM)**
-This is the most impressive part of the entire project. Look at the right side of the chart where the light blue bars turn into *"stripes"* (turning on and off) and the dark blue temperature line creates a *zig-zag "sawtooth" pattern*.
-- *Why is this brilliant?* Because it proves `ELSIF Simulated_Temp <= 70` logic is working flawlessly.<br>
-- The fan cools the transformer down to exactly *70°C*, then the PLC shuts the fan off (**the white gaps**). Without the fan, the remaining grid load heats the transformer back up to *75°C*, and the PLC kicks the fan back on.<br>
+Instead of fans being ON or OFF, now the PLC calculates a **Cooling Effort (0-100%)** and modulates Fan Stage 1 speed proportionally. Fan Stage 2 is still a backup ON/OFF layer at 90°C — like a safety net.
+
+---
+
+#### The Physics Engine (Python)
+
+**PYTHON. THANKS TO GOD, WE HAVE PYTHON IN THE WORLD!**
+
+The old version had fake constants and a basic temperature formula. The upgraded version uses a **first-order thermal ODE** — meaning temperature changes are governed by real physics, not magic numbers.
+
+\- **Thermal Model Parameters** -<br>
+Based on a ~630 kVA oil-immersed distribution transformer (ONAN/ONAF):<br>
+&bull; **`C_THERMAL = 45.0`** — thermal capacity (kJ/°C). Higher means slower temperature response, like a heavy flywheel.<br>
+&bull; **`P_CORE_LOSS = 1.3 kW`** — constant iron losses. Always present when energized, does not depend on load.<br>
+&bull; **`P_LOAD_LOSS_RATED = 6.5 kW`** — copper losses at 100% load. Scales with **I²** (current squared). Double the load = 4× the heat.<br>
+&bull; **`K_NATURAL = 0.08`** — natural convection cooling (kW/°C above ambient).<br>
+&bull; **`K_FAN1_MAX = 0.25`** — Fan 1 cooling strength at full speed.<br>
+&bull; **`K_FAN2 = 0.18`** — Fan 2 (backup) full cooling strength.<br>
+
+\- **The Digital Twin Equation** -<br>
+Every second, the simulation computes:
+```python
+# Heat generation
+q_core = P_CORE_LOSS                                    # constant
+q_copper = P_LOAD_LOSS_RATED * (load_percent / 100) ** 2  # I²R
+q_total = q_core + q_copper
+
+# Heat removal
+q_natural = K_NATURAL * (oil_temp - ambient)
+q_fan1 = K_FAN1_MAX * (fan_speed / 100) * (oil_temp - ambient) * fan1
+q_fan2 = K_FAN2 * (oil_temp - ambient) * fan2
+q_cool_total = q_natural + q_fan1 + q_fan2
+
+# Temperature change (first-order ODE)
+dT = (q_total - q_cool_total) / C_THERMAL
+oil_temp += dT
+```
+
+That `dT = Q_net / C_thermal` is the key equation. It is exactly how real thermal systems behave — net heat divided by thermal mass gives rate of temperature rise.
+
+\- **Winding Hot-Spot** -<br>
+Windings are always hotter than oil because current flows directly through copper. The simulation estimates:
+```python
+winding_temp = oil_temp + 13.0 * (load_percent / 100) ** 2
+```
+At rated load, winding is 13°C above oil. At 50% load, only ~3.25°C above.
+
+\- **Ambient Variation** -<br>
+Real transformers do not live in constant temperature rooms. The simulation includes a slow day/night sine wave:
+```python
+ambient = 25.0 + 5.0 * sin(2π × t / 600)
+```
+
+\- **Test Scenarios** -<br>
+Instead of one boring run, now there are **4 test scenarios** to stress-test the controller:
+
+| Scenario | What happens | Duration | Purpose |
+|---|---|---|---|
+| `normal` | 40-85% load, sinusoidal cycle | 600s | Steady-state PID tuning |
+| `overload` | Ramps to 130% then recovers | 400s | Transient response, I²R spike |
+| `runaway` | Sustained 120%+ load | 300s | PID limits, fan saturation |
+| `coldstart` | Starts at 10°C, rapid load pickup | 300s | Cold oil behavior |
+
+---
+
+#### The Brain — PLC (PID Controller)
+
+The PLC code is written in **IEC 61131-3 Structured Text** and runs 5 steps every scan cycle:
+
+**Step 1: Decode Modbus** — The registers arrive as 16-bit integers scaled ×100. Divide by 100 to get REAL values with 0.01°C precision.
+
+**Step 2: Watchdog** — If the temperature register does not change for 10 consecutive cycles, something is wrong (Python crashed or network died). The PLC forces **safe state**: all fans ON at 100%, critical alarm active. Better to waste electricity than to lose a $5 million transformer.
+
+**Step 3: Rate-of-Rise** — If temperature jumps more than 3°C in one second, fire an early warning alarm. This catches sudden faults before the temperature hits critical.
+
+**Step 4: PID Controller** —
+```
+Error = Core_Temp - 72.0    // setpoint is 72°C
+Integral += Error            // accumulated error (clamped 0-500)
+Derivative = Error - Prev_Error
+Output = Kp×Error + Ki×Integral + Kd×Derivative
+Cooling_Effort = CLAMP(Output, 0, 100)
+```
+The output directly controls Fan 1 speed. If PID says 45%, the fan runs at 45% speed.
+
+**Step 5: Staged Fans** —<br>
+&bull; **Fan 1**: Activates when PID output > 5%. Speed = PID output. Turns off below 2% (hysteresis to prevent rapid on/off).<br>
+&bull; **Fan 2**: Backup layer. Hard ON at 90°C, hard OFF at 85°C. If PID alone cannot keep up, this one joins the fight.<br>
+&bull; **Critical Alarm**: Latches at 105°C. Only resets manually when temp drops below 80°C. This prevents operators from just clearing the alarm without fixing the problem.<br>
+
+---
+
+#### Offline Mode
+
+Not everyone has CODESYS installed on their machine. So I added an **offline mode** where Python emulates the PID controller locally:
+```bash
+python digital_twin.py runaway --offline --fast
+```
+The `--offline` flag runs a Python replica of the PLC PID logic. The `--fast` flag removes real-time delay and runs the simulation as fast as the CPU allows. In about 2 seconds you get 300 seconds of simulated data.
+
+---
+
+#### Live Dashboard
+
+The old version only had Power BI for visualization. Now there is a **real-time matplotlib dashboard** with 4 panels:
+1. **Temperatures** — oil (red), winding (orange), ambient (blue) curves
+2. **Load profile** — grid demand percentage over time
+3. **Cooling status** — fan speed bar, fan 1/2 state indicators
+4. **Alarms** — critical alarm, rate-of-rise warning
+
+Run it in a second terminal while the simulation is active:
+```bash
+python live_dashboard.py
+```
+
+And for after the run finishes, there is a **post-run analysis** script that calculates:
+- Peak oil & winding temperatures
+- Thermal time constants
+- Energy balance (heat generated vs removed)
+- Cooling effectiveness
+- 6-panel summary figure
+
+---
+
+#### The Proof: PID vs Bang-Bang
+
+In the `runaway` scenario (sustained 120%+ load), the PID controller ramps Fan 1 from 0% to ~55% speed and **stabilizes** oil temperature at ~77°C — well below the 105°C critical threshold. 
+
+The old Bang-Bang controller would have produced oscillating sawtooth waves, bouncing between 70°C and 75°C with fans violently switching on and off. The PID gives **smooth, proportional control** — exactly what you want in a real substation.
+
+---
 
 #### Conclusion
-This project helped to understand more about transformers, control theory and python coding. Back days in Uzbekistan, I was used to see only old transformers and I thought they were not that important. But when we did not have electricity, the importance of transformer rised. It was like a trigger. Now, I realized the cooling part is also crucial to work well.
+This project started as a "let me impress Siemens Energy" thing and turned into a proper simulation platform. The upgrade from v1 to v2 taught me that the difference between a *student project* and an *engineering tool* is in the details — proper physics models, safety interlocks, watchdog timers, and test scenarios that actually break your system. 
+
+The PLC does not care that the temperature is fake. It reads Modbus registers, runs its PID loop, and commands the fans. When I eventually connect this to a real RTD sensor and a real VFD-driven fan, the PLC code stays the same. That is the whole point of a digital twin — **validate the logic before you risk the hardware**.
 
 
 <a href="https://github.com/justkuchkorov/transformer_digital_twin" target="_blank">
   <button style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-block: 20px; font-weight: bold;">
-    View the Messy Source Code on GitHub
+    View Source Code on GitHub
   </button>
 </a>
 
