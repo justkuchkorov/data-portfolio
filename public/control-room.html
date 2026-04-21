@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer Control Room</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: #0a0e17;
+  color: #c8d6e5;
+  overflow-x: hidden;
+}
+
+.header {
+  background: linear-gradient(135deg, #0f1923, #1a2332);
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1e3a5f;
+}
+.header h1 { font-size: 18px; color: #4fc3f7; letter-spacing: 2px; }
+.header .status-bar { display: flex; gap: 16px; align-items: center; font-size: 12px; }
+.header .time-speed { color: #ffd54f; }
+
+.main { display: grid; grid-template-columns: 280px 1fr 260px; gap: 0; height: calc(100vh - 50px); overflow: hidden; }
+
+/* Left Panel - Controls */
+.left-panel {
+  background: #0d1219;
+  border-right: 1px solid #1e3a5f;
+  padding: 16px;
+  overflow-y: auto;
+}
+.panel-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #4fc3f7;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.control-group { margin-bottom: 16px; }
+.control-label {
+  font-size: 11px;
+  color: #7f8c9b;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+.control-label span { color: #ffd54f; font-weight: bold; }
+
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #1a2332;
+  border-radius: 3px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: 2px solid #0a0e17;
+}
+input[type="range"].load-slider::-webkit-slider-thumb { background: #ff9800; }
+input[type="range"].danger::-webkit-slider-thumb { background: #f44336; }
+
+.mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #1e3a5f;
+  background: #0f1923;
+  color: #7f8c9b;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.mode-btn.active {
+  background: #1e3a5f;
+  color: #4fc3f7;
+  border-color: #4fc3f7;
+}
+
+.scenario-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.scenario-btn {
+  padding: 10px 6px;
+  border: 1px solid #1e3a5f;
+  background: #0f1923;
+  color: #c8d6e5;
+  font-size: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.scenario-btn:hover { border-color: #4fc3f7; color: #4fc3f7; }
+.scenario-btn.active { border-color: #ff9800; color: #ff9800; background: #1a1200; }
+
+.manual-fan-control { display: none; }
+.manual-fan-control.visible { display: block; }
+
+/* Center Panel - Visualization */
+.center-panel {
+  background: #0b1017;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.gauges-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.gauge-card {
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.gauge-card .gauge-value {
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 1.1;
+}
+.gauge-card .gauge-unit { font-size: 12px; color: #7f8c9b; }
+.gauge-card .gauge-label { font-size: 10px; color: #7f8c9b; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+.gauge-card.temp .gauge-value { color: #4fc3f7; }
+.gauge-card.temp.warning .gauge-value { color: #ff9800; }
+.gauge-card.temp.critical .gauge-value { color: #f44336; }
+.gauge-card.temp.critical { border-color: #f44336; animation: alarm-pulse 0.5s infinite alternate; }
+
+.gauge-card.winding .gauge-value { color: #ce93d8; }
+.gauge-card.load .gauge-value { color: #ff9800; }
+.gauge-card.fan .gauge-value { color: #66bb6a; }
+
+@keyframes alarm-pulse {
+  from { background: #0f1923; }
+  to { background: #2a0a0a; }
+}
+
+.chart-container {
+  flex: 1;
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+.chart-container canvas { display: block; }
+
+.transformer-visual {
+  height: 160px;
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Right Panel - Status & Score */
+.right-panel {
+  background: #0d1219;
+  border-left: 1px solid #1e3a5f;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.alarm-box {
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  border: 1px solid;
+}
+.alarm-box.ok { border-color: #1b5e20; background: #0a1f0a; color: #66bb6a; }
+.alarm-box.warn { border-color: #e65100; background: #1a1200; color: #ff9800; }
+.alarm-box.crit { border-color: #b71c1c; background: #2a0a0a; color: #f44336; animation: alarm-pulse 0.5s infinite alternate; }
+
+.score-display {
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.score-display .score-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: #ffd54f;
+}
+.score-display .score-label {
+  font-size: 10px;
+  color: #7f8c9b;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.event-log {
+  font-size: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #080c12;
+  border: 1px solid #1e3a5f;
+  border-radius: 6px;
+  padding: 8px;
+}
+.event-log .event {
+  padding: 3px 0;
+  border-bottom: 1px solid #0f1923;
+}
+.event-log .event .time { color: #4fc3f7; }
+.event-log .event.warn { color: #ff9800; }
+.event-log .event.crit { color: #f44336; }
+.event-log .event.good { color: #66bb6a; }
+
+.pid-display {
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 10px;
+}
+.pid-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+.pid-row .label { color: #7f8c9b; }
+.pid-row .val { color: #4fc3f7; font-weight: bold; }
+
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  background: #b71c1c;
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: none;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.reset-btn.visible { display: block; }
+.reset-btn:hover { background: #d32f2f; }
+
+/* Tutorial Overlay */
+.tutorial-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(5, 8, 15, 0.95);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tutorial-overlay.hidden { display: none; }
+.tutorial-box {
+  max-width: 620px;
+  background: #0f1923;
+  border: 1px solid #1e3a5f;
+  border-radius: 12px;
+  padding: 36px;
+  text-align: center;
+}
+.tutorial-box h2 {
+  font-size: 22px;
+  color: #4fc3f7;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.tutorial-box .subtitle {
+  color: #7f8c9b;
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.tutorial-steps {
+  text-align: left;
+  margin-bottom: 28px;
+}
+.tutorial-step {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e3a5f;
+  color: #4fc3f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.step-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #c8d6e5;
+  padding-top: 3px;
+}
+.step-text strong { color: #ffd54f; }
+.step-text .dim { color: #7f8c9b; }
+
+.start-btn {
+  padding: 14px 48px;
+  background: linear-gradient(135deg, #1e88e5, #1565c0);
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  letter-spacing: 1px;
+  transition: transform 0.15s;
+}
+.start-btn:hover { transform: scale(1.04); }
+.tutorial-footer {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #4a5568;
+}
+.tutorial-footer a { color: #4fc3f7; text-decoration: none; }
+
+.fan-visual {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.fan-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #1e3a5f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+.fan-icon.spinning { border-color: #66bb6a; }
+.fan-icon.locked-off {
+  border-color: #f44336;
+  box-shadow: 0 0 8px rgba(244,67,54,0.5);
+  animation: lockedPulse 1.5s ease-in-out infinite;
+}
+@keyframes lockedPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(244,67,54,0.4); }
+  50% { box-shadow: 0 0 14px rgba(244,67,54,0.8); }
+}
+.fan-icon.locked-off .fan-speed-label { color: #f44336; }
+.fan-icon .blade {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  transition: none;
+}
+.fan-icon .fan-label {
+  position: absolute;
+  bottom: -16px;
+  font-size: 9px;
+  color: #7f8c9b;
+  white-space: nowrap;
+}
+.fan-icon .fan-speed-label {
+  position: absolute;
+  top: -16px;
+  font-size: 9px;
+  color: #66bb6a;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<!-- Tutorial Overlay -->
+<div class="tutorial-overlay" id="tutorialOverlay">
+  <div class="tutorial-box">
+    <h2>TRANSFORMER CONTROL ROOM</h2>
+    <div class="subtitle">Interactive thermal simulation of a 630 kVA oil-immersed distribution transformer</div>
+
+    <div class="tutorial-steps">
+      <div class="tutorial-step">
+        <div class="step-num">1</div>
+        <div class="step-text">A virtual transformer is generating heat. The <strong>PID controller</strong> automatically adjusts cooling fan speed to keep oil temperature at the setpoint (72C). Watch it fight to stabilize.</div>
+      </div>
+      <div class="tutorial-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Try the <strong>scenarios</strong> on the left: Overload ramps to 130%, Runaway pushes 120%+ sustained, Coolant Fail kills the fans. Can the PID keep up?</div>
+      </div>
+      <div class="tutorial-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Switch to <strong>MANUAL</strong> mode and control the fans yourself. Try to beat the PID controller. <span class="dim">(You probably can't.)</span></div>
+      </div>
+      <div class="tutorial-step">
+        <div class="step-num">4</div>
+        <div class="step-text">Drag the <strong>Kp, Ki, Kd sliders</strong> to see how PID tuning affects response. Crank Kp to 15 and watch it oscillate. Set Ki to 0 and see the steady-state offset.</div>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startSimulation()">START SIMULATION</button>
+
+    <div class="tutorial-footer">
+      Built by <a href="https://abdi-engineer.vercel.app" target="_blank">Abdurakhmon Kuchkorov</a> | Physics based on real 630 kVA transformer parameters
+      <br>Source: <a href="https://github.com/justkuchkorov/transformer_digital_twin" target="_blank">github.com/justkuchkorov/transformer_digital_twin</a>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>TRANSFORMER CONTROL ROOM</h1>
+  <div class="status-bar">
+    <span>630 kVA Oil-Immersed Distribution Transformer</span>
+    <span class="time-speed" id="simTimeDisplay">T+0s | 10x speed</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-title">Operator Controls</div>
+
+    <div class="control-group">
+      <div class="control-label">Load Demand <span id="loadDisplay">60%</span></div>
+      <input type="range" class="load-slider" id="loadSlider" min="0" max="200" value="60" step="1">
+    </div>
+
+    <div class="panel-title">Mode</div>
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="autoBtn" onclick="setMode('auto')">AUTO (PID)</div>
+      <div class="mode-btn" id="manualBtn" onclick="setMode('manual')">MANUAL</div>
+    </div>
+
+    <div class="manual-fan-control" id="manualControls">
+      <div class="control-group">
+        <div class="control-label">Fan 1 Speed <span id="manFan1Display">0%</span></div>
+        <input type="range" id="manFan1Slider" min="0" max="100" value="0" step="1">
+      </div>
+      <div class="control-group">
+        <div class="control-label">Fan 2 <span id="manFan2Display">OFF</span></div>
+        <input type="range" id="manFan2Slider" min="0" max="1" value="0" step="1">
+      </div>
+    </div>
+
+    <div class="panel-title">PID Tuning</div>
+    <div class="control-group">
+      <div class="control-label">Kp <span id="kpDisplay">4.00</span></div>
+      <input type="range" id="kpSlider" min="0" max="15" value="4" step="0.1">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Ki <span id="kiDisplay">0.15</span></div>
+      <input type="range" id="kiSlider" min="0" max="1" value="0.15" step="0.01">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Kd <span id="kdDisplay">1.00</span></div>
+      <input type="range" id="kdSlider" min="0" max="5" value="1" step="0.1">
+    </div>
+    <div class="control-group">
+      <div class="control-label">Setpoint <span id="spDisplay">72.0 C</span></div>
+      <input type="range" id="spSlider" min="50" max="95" value="72" step="0.5">
+    </div>
+
+    <div class="panel-title">Scenarios</div>
+    <div class="scenario-btns">
+      <button class="scenario-btn" onclick="runScenario('normal')">Normal<br><small>40-85% cycle</small></button>
+      <button class="scenario-btn" onclick="runScenario('overload')">Overload<br><small>ramp to 130%</small></button>
+      <button class="scenario-btn" onclick="runScenario('runaway')">Runaway<br><small>120%+ sustained</small></button>
+      <button class="scenario-btn" onclick="runScenario('coldstart')">Cold Start<br><small>10C to 80%</small></button>
+      <button class="scenario-btn" onclick="runScenario('coolant_fail')">Coolant Fail<br><small>fans die</small></button>
+      <button class="scenario-btn" onclick="runScenario('free')">Free Play<br><small>you control</small></button>
+    </div>
+
+    <div class="panel-title">Simulation Speed</div>
+    <div class="control-group">
+      <div class="control-label">Time Multiplier <span id="speedDisplay">10x</span></div>
+      <input type="range" id="speedSlider" min="1" max="50" value="10" step="1">
+    </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="center-panel">
+    <div class="gauges-row">
+      <div class="gauge-card temp" id="oilGauge">
+        <div class="gauge-value" id="oilTempValue">25.0</div>
+        <div class="gauge-unit">C</div>
+        <div class="gauge-label">Oil Temperature</div>
+      </div>
+      <div class="gauge-card winding">
+        <div class="gauge-value" id="windingTempValue">25.0</div>
+        <div class="gauge-unit">C</div>
+        <div class="gauge-label">Winding Hot-Spot</div>
+      </div>
+      <div class="gauge-card load">
+        <div class="gauge-value" id="loadValue">60</div>
+        <div class="gauge-unit">%</div>
+        <div class="gauge-label">Load</div>
+      </div>
+      <div class="gauge-card fan">
+        <div class="gauge-value" id="totalCoolingValue">0</div>
+        <div class="gauge-unit">kW</div>
+        <div class="gauge-label">Total Cooling</div>
+        <div style="font-size:9px;color:#7f8c9b;margin-top:4px" id="coolingBreakdown">ONAN: 0 | F1: 0 | F2: 0</div>
+      </div>
+    </div>
+
+    <div class="fan-visual">
+      <div class="fan-icon" id="fan1Icon">
+        <canvas class="blade" id="fan1Canvas" width="30" height="30"></canvas>
+        <div class="fan-speed-label" id="fan1SpeedLabel">0%</div>
+        <div class="fan-label">FAN 1 (PID)</div>
+      </div>
+      <div class="fan-icon" id="fan2Icon" onclick="toggleFan2Lock()" style="cursor:pointer" title="Click to lock/unlock Fan 2">
+        <canvas class="blade" id="fan2Canvas" width="30" height="30"></canvas>
+        <div class="fan-speed-label" id="fan2SpeedLabel">OFF</div>
+        <div class="fan-label">FAN 2 (click)</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-title">Score</div>
+    <div class="score-display">
+      <div class="score-value" id="scoreValue">1000</div>
+      <div class="score-label">Operator Rating</div>
+    </div>
+
+    <button class="reset-btn" id="resetAlarmBtn" onclick="resetCriticalAlarm()">RESET CRITICAL ALARM</button>
+
+    <div class="panel-title">Alarms</div>
+    <div class="alarm-box ok" id="tempAlarm">TEMPERATURE NORMAL</div>
+    <div class="alarm-box ok" id="rateAlarm">RATE-OF-RISE NORMAL</div>
+    <div class="alarm-box ok" id="watchdogAlarm">WATCHDOG OK</div>
+
+    <div class="panel-title" style="margin-top: 12px;">PID Internals</div>
+    <div class="pid-display">
+      <div class="pid-row"><span class="label">Error (SP-PV)</span><span class="val" id="pidError">0.00</span></div>
+      <div class="pid-row"><span class="label">P term</span><span class="val" id="pidP">0.00</span></div>
+      <div class="pid-row"><span class="label">I term</span><span class="val" id="pidI">0.00</span></div>
+      <div class="pid-row"><span class="label">D term</span><span class="val" id="pidD">0.00</span></div>
+      <div class="pid-row"><span class="label">Output</span><span class="val" id="pidOut">0.00%</span></div>
+      <div class="pid-row"><span class="label">Integral Accum</span><span class="val" id="pidIntegral">0.00</span></div>
+      <div class="pid-row"><span class="label">Anti-windup</span><span class="val" id="pidWindup">-</span></div>
+    </div>
+
+    <div class="panel-title">Event Log</div>
+    <div class="event-log" id="eventLog"></div>
+  </div>
+</div>
+
+<script>
+// ============ PHYSICS ENGINE (matches your Python digital twin) ============
+
+const PHYSICS = {
+  C_thermal: 45.0,        // kJ/C - thermal mass
+  P_core: 1.3,            // kW - constant core/iron losses
+  P_copper_rated: 6.5,    // kW - load losses at 100%
+  K_natural: 0.08,        // kW/C - ONAN natural convection
+  K_fan1_max: 0.25,       // kW/C - fan 1 at 100%
+  K_fan2: 0.18,           // kW/C - fan 2 (binary)
+  ambient_base: 25.0,     // C
+  ambient_amplitude: 5.0, // C
+};
+
+// State
+let state = {
+  oilTemp: 25.0,
+  windingTemp: 25.0,
+  ambient: 25.0,
+  load: 60,
+  fan1Speed: 0,     // 0-100%
+  fan2On: false,
+  fan2Locked: false, // operator locked Fan 2 off
+  mode: 'auto',     // 'auto' or 'manual'
+
+  // PID state
+  pid: {
+    Kp: 4.0, Ki: 0.15, Kd: 1.0,
+    setpoint: 72.0,
+    integral: 0,
+    prevError: 0,
+    output: 0,
+  },
+
+  // Alarms
+  criticalLatched: false,
+  rateAlarmActive: false,
+  prevTemp: 25.0,
+
+  // Scenario
+  scenario: null,
+  scenarioTime: 0,
+
+  // Simulation
+  simTime: 0,
+  score: 1000,
+  timeSpeed: 10,
+  coolantFailed: false,
+
+  // Chart data
+  history: {
+    time: [],
+    oilTemp: [],
+    windingTemp: [],
+    ambient: [],
+    fan1: [],
+    fan2: [],
+    load: [],
+    setpoint: [],
+  },
+  maxHistory: 3000,
+};
+
+// Fan animation
+let fan1Angle = 0;
+let fan2Angle = 0;
+
+function getAmbient(t) {
+  return PHYSICS.ambient_base + PHYSICS.ambient_amplitude * Math.sin(2 * Math.PI * t / 86400);
+}
+
+function getScenarioLoad(t) {
+  if (!state.scenario || state.scenario === 'free') return null;
+
+  switch (state.scenario) {
+    case 'normal':
+      return 62.5 + 22.5 * Math.sin(2 * Math.PI * t / 200);
+    case 'overload':
+      if (t < 100) return 60 + (130 - 60) * (t / 100);
+      if (t < 250) return 130;
+      return 130 - (130 - 60) * ((t - 250) / 150);
+    case 'runaway':
+      if (t < 50) return 60 + (123 - 60) * (t / 50);
+      return 123 + 5 * Math.sin(t / 20);
+    case 'coldstart':
+      if (t < 30) return 5;
+      if (t < 80) return 5 + (80 - 5) * ((t - 30) / 50);
+      return 80;
+    case 'coolant_fail':
+      return 85;
+    default:
+      return null;
+  }
+}
+
+function stepPhysics(dt) {
+  // Update scenario time
+  state.scenarioTime += dt;
+
+  // Apply scenario load
+  const scenarioLoad = getScenarioLoad(state.scenarioTime);
+  if (scenarioLoad !== null) {
+    state.load = scenarioLoad;
+    document.getElementById('loadSlider').value = Math.round(state.load);
+    document.getElementById('loadDisplay').textContent = Math.round(state.load) + '%';
+  }
+
+  // Cold start: set initial temp
+  if (state.scenario === 'coldstart' && state.scenarioTime < 0.1) {
+    state.oilTemp = 10;
+  }
+
+  // Coolant failure
+  if (state.scenario === 'coolant_fail' && state.scenarioTime > 30) {
+    state.coolantFailed = true;
+  }
+
+  // Ambient temperature
+  state.ambient = getAmbient(state.simTime);
+
+  // Heat generation
+  const loadFraction = state.load / 100;
+  const Q_core = PHYSICS.P_core;
+  const Q_copper = PHYSICS.P_copper_rated * loadFraction * loadFraction;
+  const Q_gen = Q_core + Q_copper;
+
+  // Heat removal
+  const deltaT = state.oilTemp - state.ambient;
+  const Q_natural = PHYSICS.K_natural * deltaT;
+
+  let Q_fan1 = 0, Q_fan2 = 0;
+  if (!state.coolantFailed) {
+    Q_fan1 = PHYSICS.K_fan1_max * (state.fan1Speed / 100) * deltaT;
+    Q_fan2 = state.fan2On ? PHYSICS.K_fan2 * deltaT : 0;
+  }
+
+  const Q_cool = Q_natural + Q_fan1 + Q_fan2;
+  const Q_net = Q_gen - Q_cool;
+
+  // Temperature change
+  const dT = (Q_net / PHYSICS.C_thermal) * dt;
+  state.oilTemp += dT;
+
+  // Winding hot-spot
+  state.windingTemp = state.oilTemp + 13 * loadFraction * loadFraction;
+
+  // Rate of rise
+  const rateOfRise = (state.oilTemp - state.prevTemp) / dt;
+  state.prevTemp = state.oilTemp;
+
+  // PID controller (auto mode)
+  if (state.mode === 'auto') {
+    const error = state.oilTemp - state.pid.setpoint;
+    state.pid.integral += error * dt;
+
+    // Anti-windup clamp
+    if (state.pid.integral > 500) state.pid.integral = 500;
+    if (state.pid.integral < 0) state.pid.integral = 0;
+
+    const derivative = (error - state.pid.prevError) / dt;
+    state.pid.prevError = error;
+
+    const P = state.pid.Kp * error;
+    const I = state.pid.Ki * state.pid.integral;
+    const D = state.pid.Kd * derivative;
+
+    state.pid.output = Math.max(0, Math.min(100, P + I + D));
+    state.fan1Speed = state.pid.output;
+
+    // Fan 2: hysteresis backup (unless operator locked it off)
+    if (state.fan2Locked) {
+      state.fan2On = false;
+    } else {
+      if (state.oilTemp >= 90) state.fan2On = true;
+      if (state.oilTemp <= 85) state.fan2On = false;
+    }
+
+    // Update PID display
+    document.getElementById('pidError').textContent = error.toFixed(2);
+    document.getElementById('pidP').textContent = P.toFixed(2);
+    document.getElementById('pidI').textContent = I.toFixed(2);
+    document.getElementById('pidD').textContent = D.toFixed(2);
+    document.getElementById('pidOut').textContent = state.pid.output.toFixed(1) + '%';
+    document.getElementById('pidIntegral').textContent = state.pid.integral.toFixed(1);
+    document.getElementById('pidWindup').textContent =
+      state.pid.integral >= 499 ? 'CLAMPED' : state.pid.integral <= 0.01 ? 'FLOOR' : '-';
+  } else {
+    // Manual mode
+    state.fan1Speed = parseFloat(document.getElementById('manFan1Slider').value);
+    state.fan2On = parseInt(document.getElementById('manFan2Slider').value) === 1;
+  }
+
+  // Alarms
+  // Rate-of-rise
+  if (Math.abs(rateOfRise) > 3.0 && !state.rateAlarmActive) {
+    state.rateAlarmActive = true;
+    logEvent('RATE-OF-RISE ALARM: dT/dt = ' + rateOfRise.toFixed(1) + ' C/s', 'warn');
+    state.score -= 20;
+  } else if (Math.abs(rateOfRise) <= 2.0) {
+    state.rateAlarmActive = false;
+  }
+
+  // Critical latch
+  if (state.oilTemp >= 105 && !state.criticalLatched) {
+    state.criticalLatched = true;
+    logEvent('CRITICAL ALARM LATCHED at ' + state.oilTemp.toFixed(1) + ' C', 'crit');
+    state.score -= 200;
+    // Force safe state
+    if (state.mode === 'auto') {
+      state.fan1Speed = 100;
+      state.fan2On = true;
+    }
+  }
+
+  // Score decay based on temperature
+  if (state.oilTemp > 95) state.score -= 0.5 * dt;
+  if (state.oilTemp > 105) state.score -= 2 * dt;
+  if (state.oilTemp > 85 && state.oilTemp <= 95) state.score -= 0.1 * dt;
+
+  // Bonus for stable control near setpoint
+  if (Math.abs(state.oilTemp - state.pid.setpoint) < 3 && state.load > 50) {
+    state.score += 0.05 * dt;
+  }
+
+  state.score = Math.max(0, Math.min(2000, state.score));
+  state.simTime += dt;
+
+  // Record history
+  state.history.time.push(state.simTime);
+  state.history.oilTemp.push(state.oilTemp);
+  state.history.windingTemp.push(state.windingTemp);
+  state.history.ambient.push(state.ambient);
+  state.history.fan1.push(state.fan1Speed);
+  state.history.fan2.push(state.fan2On ? 100 : 0);
+  state.history.load.push(state.load);
+  state.history.setpoint.push(state.pid.setpoint);
+
+  // Trim history
+  if (state.history.time.length > state.maxHistory) {
+    for (let key in state.history) {
+      state.history[key].shift();
+    }
+  }
+}
+
+// ============ UI UPDATE ============
+
+function updateUI() {
+  // Gauges
+  document.getElementById('oilTempValue').textContent = state.oilTemp.toFixed(1);
+  document.getElementById('windingTempValue').textContent = state.windingTemp.toFixed(1);
+  document.getElementById('loadValue').textContent = Math.round(state.load);
+
+  // Cooling breakdown in kW
+  const deltaT = state.oilTemp - state.ambient;
+  const Q_onan = PHYSICS.K_natural * deltaT;
+  const Q_f1 = state.coolantFailed ? 0 : PHYSICS.K_fan1_max * (state.fan1Speed / 100) * deltaT;
+  const Q_f2 = (state.fan2On && !state.coolantFailed) ? PHYSICS.K_fan2 * deltaT : 0;
+  const Q_total = Q_onan + Q_f1 + Q_f2;
+  document.getElementById('totalCoolingValue').textContent = Q_total.toFixed(1);
+  document.getElementById('coolingBreakdown').textContent =
+    'ONAN: ' + Q_onan.toFixed(1) + ' | F1: ' + Q_f1.toFixed(1) + ' | F2: ' + Q_f2.toFixed(1);
+
+  // Temperature color
+  const oilGauge = document.getElementById('oilGauge');
+  oilGauge.className = 'gauge-card temp';
+  if (state.oilTemp >= 105 || state.criticalLatched) oilGauge.className += ' critical';
+  else if (state.oilTemp >= 85) oilGauge.className += ' warning';
+
+  // Fan speed labels
+  document.getElementById('fan1SpeedLabel').textContent = Math.round(state.fan1Speed) + '%';
+  document.getElementById('fan2SpeedLabel').textContent =
+    state.fan2Locked ? 'LOCKED OFF' : (state.fan2On ? 'ON' : 'OFF');
+
+  // Fan icons
+  document.getElementById('fan1Icon').className = 'fan-icon' + (state.fan1Speed > 0 ? ' spinning' : '');
+  document.getElementById('fan2Icon').className = 'fan-icon'
+    + (state.fan2On ? ' spinning' : '')
+    + (state.fan2Locked ? ' locked-off' : '');
+
+  // Alarms
+  const tempAlarm = document.getElementById('tempAlarm');
+  if (state.criticalLatched) {
+    tempAlarm.className = 'alarm-box crit';
+    tempAlarm.textContent = 'CRITICAL: ' + state.oilTemp.toFixed(1) + ' C - MANUAL RESET REQUIRED';
+  } else if (state.oilTemp >= 90) {
+    tempAlarm.className = 'alarm-box warn';
+    tempAlarm.textContent = 'HIGH TEMP: ' + state.oilTemp.toFixed(1) + ' C - FAN 2 ACTIVE';
+  } else if (state.oilTemp >= 80) {
+    tempAlarm.className = 'alarm-box warn';
+    tempAlarm.textContent = 'WARM: ' + state.oilTemp.toFixed(1) + ' C';
+  } else {
+    tempAlarm.className = 'alarm-box ok';
+    tempAlarm.textContent = 'TEMPERATURE NORMAL: ' + state.oilTemp.toFixed(1) + ' C';
+  }
+
+  const rateAlarmEl = document.getElementById('rateAlarm');
+  if (state.rateAlarmActive) {
+    rateAlarmEl.className = 'alarm-box warn';
+    rateAlarmEl.textContent = 'RATE-OF-RISE > 3 C/s';
+  } else {
+    rateAlarmEl.className = 'alarm-box ok';
+    rateAlarmEl.textContent = 'RATE-OF-RISE NORMAL';
+  }
+
+  // Coolant failure alarm
+  const wdAlarm = document.getElementById('watchdogAlarm');
+  if (state.coolantFailed) {
+    wdAlarm.className = 'alarm-box crit';
+    wdAlarm.textContent = 'COOLANT SYSTEM FAILURE';
+  } else {
+    wdAlarm.className = 'alarm-box ok';
+    wdAlarm.textContent = 'COOLING SYSTEM OK';
+  }
+
+  // Critical reset button
+  document.getElementById('resetAlarmBtn').className =
+    'reset-btn' + (state.criticalLatched && state.oilTemp < 80 ? ' visible' : '');
+
+  // Score
+  document.getElementById('scoreValue').textContent = Math.round(state.score);
+
+  // Time display
+  const mins = Math.floor(state.simTime / 60);
+  const secs = Math.floor(state.simTime % 60);
+  document.getElementById('simTimeDisplay').textContent =
+    `T+${mins}m${secs.toString().padStart(2,'0')}s | ${state.timeSpeed}x speed`;
+
+  // Manual controls
+  if (state.mode === 'manual') {
+    document.getElementById('manFan1Display').textContent =
+      document.getElementById('manFan1Slider').value + '%';
+    document.getElementById('manFan2Display').textContent =
+      parseInt(document.getElementById('manFan2Slider').value) ? 'ON' : 'OFF';
+  }
+}
+
+// ============ CHART ============
+
+function drawChart() {
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  const w = Math.floor(rect.width - 24);
+  const h = Math.floor(rect.height - 24);
+  if (w < 100 || h < 50) return;
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const data = state.history;
+  const len = data.time.length;
+  if (len < 2) return;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Fixed Y-axis range — covers all interesting action
+  let minT = 15;
+  let maxT = 120;
+
+  const chartLeft = 45;
+  const chartRight = W - 100;
+  const chartTop = 10;
+  const chartBottom = H - 25;
+  const chartW = chartRight - chartLeft;
+  const chartH = chartBottom - chartTop;
+
+  // X-axis: fixed sliding window (last 300 sim-seconds)
+  const windowSize = 300; // seconds of sim time visible
+  const timeEnd = data.time[len - 1];
+  const timeStart = Math.max(0, timeEnd - windowSize);
+
+  function xPos(i) {
+    const t = data.time[i];
+    return chartLeft + ((t - timeStart) / windowSize) * chartW;
+  }
+  function yTemp(t) { return chartBottom - ((t - minT) / (maxT - minT)) * chartH; }
+  function yPct(p) { return chartBottom - (p / 150) * chartH; }
+
+  // Grid lines
+  ctx.strokeStyle = '#1a2332';
+  ctx.lineWidth = 1;
+  for (let t = Math.ceil(minT / 10) * 10; t <= maxT; t += 10) {
+    const y = yTemp(t);
+    ctx.beginPath(); ctx.moveTo(chartLeft, y); ctx.lineTo(chartRight, y); ctx.stroke();
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '9px Consolas';
+    ctx.textAlign = 'right';
+    ctx.fillText(t + 'C', chartLeft - 4, y + 3);
+  }
+
+  // X-axis time labels
+  ctx.fillStyle = '#4a5568';
+  ctx.font = '9px Consolas';
+  ctx.textAlign = 'center';
+  for (let t = Math.ceil(timeStart / 30) * 30; t <= timeEnd; t += 30) {
+    const x = chartLeft + ((t - timeStart) / windowSize) * chartW;
+    if (x >= chartLeft && x <= chartRight) {
+      ctx.fillText(Math.floor(t / 60) + ':' + (Math.floor(t % 60)).toString().padStart(2, '0'), x, chartBottom + 14);
+      ctx.strokeStyle = '#1a2332';
+      ctx.beginPath(); ctx.moveTo(x, chartTop); ctx.lineTo(x, chartBottom); ctx.stroke();
+    }
+  }
+
+  // Threshold lines with labels
+  ctx.setLineDash([4, 4]);
+  ctx.font = '8px Consolas';
+  ctx.textAlign = 'left';
+
+  // Setpoint
+  ctx.strokeStyle = '#4fc3f755';
+  ctx.beginPath(); ctx.moveTo(chartLeft, yTemp(state.pid.setpoint)); ctx.lineTo(chartRight, yTemp(state.pid.setpoint)); ctx.stroke();
+  ctx.fillStyle = '#4fc3f788';
+  ctx.fillText('SP ' + state.pid.setpoint + 'C', chartLeft + 2, yTemp(state.pid.setpoint) - 3);
+
+  // Critical
+  ctx.strokeStyle = '#f4433655';
+  ctx.beginPath(); ctx.moveTo(chartLeft, yTemp(105)); ctx.lineTo(chartRight, yTemp(105)); ctx.stroke();
+  ctx.fillStyle = '#f4433688';
+  ctx.fillText('CRITICAL 105C', chartLeft + 2, yTemp(105) - 3);
+
+  // Fan 2 threshold
+  ctx.strokeStyle = '#ff980055';
+  ctx.beginPath(); ctx.moveTo(chartLeft, yTemp(90)); ctx.lineTo(chartRight, yTemp(90)); ctx.stroke();
+  ctx.fillStyle = '#ff980088';
+  ctx.fillText('FAN2 ON 90C', chartLeft + 2, yTemp(90) - 3);
+
+  ctx.setLineDash([]);
+
+  // Draw lines
+  function drawLine(arr, mapFn, color, width) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width || 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < len; i++) {
+      const x = xPos(i);
+      const y = mapFn(arr[i]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Load (scaled)
+  drawLine(data.load, yPct, '#ff980044', 1);
+  // Fan 1
+  drawLine(data.fan1, yPct, '#66bb6a44', 1);
+  // Ambient
+  drawLine(data.ambient, yTemp, '#78909c66', 1);
+  // Oil temp
+  drawLine(data.oilTemp, yTemp, '#4fc3f7', 2.5);
+  // Winding temp
+  drawLine(data.windingTemp, yTemp, '#ce93d8', 1.5);
+  // Setpoint
+  drawLine(data.setpoint, yTemp, '#4fc3f744', 1);
+
+  // Legend
+  const legendX = chartRight + 8;
+  const legendItems = [
+    { color: '#4fc3f7', label: 'Oil Temp' },
+    { color: '#ce93d8', label: 'Winding' },
+    { color: '#78909c', label: 'Ambient' },
+    { color: '#ff9800', label: 'Load %' },
+    { color: '#66bb6a', label: 'Fan 1 %' },
+  ];
+
+  ctx.font = '9px Consolas';
+  legendItems.forEach((item, i) => {
+    const y = chartTop + 14 + i * 16;
+    ctx.fillStyle = item.color;
+    ctx.fillRect(legendX, y - 4, 10, 3);
+    ctx.fillStyle = '#7f8c9b';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.label, legendX + 14, y);
+  });
+
+  // Current values on right
+  ctx.font = 'bold 10px Consolas';
+  if (len > 0) {
+    const lastIdx = len - 1;
+    ctx.fillStyle = '#4fc3f7';
+    ctx.fillText(data.oilTemp[lastIdx].toFixed(1) + 'C', legendX, chartTop + 14 + 5 * 16 + 10);
+    ctx.fillStyle = '#ce93d8';
+    ctx.fillText(data.windingTemp[lastIdx].toFixed(1) + 'C', legendX, chartTop + 14 + 5 * 16 + 24);
+  }
+}
+
+// ============ FAN ANIMATION ============
+
+function drawFan(canvasId, speed, angle) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const cx = 15, cy = 15;
+  ctx.clearRect(0, 0, 30, 30);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+
+  const bladeColor = speed > 0 ? '#66bb6a' : '#2a3a4a';
+
+  for (let i = 0; i < 4; i++) {
+    ctx.save();
+    ctx.rotate(i * Math.PI / 2);
+    ctx.fillStyle = bladeColor;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(5, -3, 12, -2);
+    ctx.quadraticCurveTo(5, 3, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(0, 0, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#1e3a5f';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ============ EVENT LOG ============
+
+function logEvent(msg, type) {
+  const log = document.getElementById('eventLog');
+  const mins = Math.floor(state.simTime / 60);
+  const secs = Math.floor(state.simTime % 60);
+  const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+  const div = document.createElement('div');
+  div.className = 'event ' + (type || '');
+  div.innerHTML = `<span class="time">[${timeStr}]</span> ${msg}`;
+  log.insertBefore(div, log.firstChild);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+// ============ CONTROLS ============
+
+function setMode(mode) {
+  state.mode = mode;
+  document.getElementById('autoBtn').className = 'mode-btn' + (mode === 'auto' ? ' active' : '');
+  document.getElementById('manualBtn').className = 'mode-btn' + (mode === 'manual' ? ' active' : '');
+  document.getElementById('manualControls').className =
+    'manual-fan-control' + (mode === 'manual' ? ' visible' : '');
+  logEvent('Mode: ' + mode.toUpperCase(), 'good');
+}
+
+function toggleFan2Lock() {
+  state.fan2Locked = !state.fan2Locked;
+  if (state.fan2Locked) {
+    state.fan2On = false;
+    logEvent('OPERATOR: Fan 2 LOCKED OFF — no backup cooling!', 'warn');
+  } else {
+    logEvent('OPERATOR: Fan 2 UNLOCKED — auto-hysteresis restored', 'good');
+  }
+}
+
+function resetCriticalAlarm() {
+  if (state.oilTemp < 80) {
+    state.criticalLatched = false;
+    state.pid.integral = 0;
+    logEvent('Critical alarm RESET by operator', 'good');
+    state.score += 50;
+  }
+}
+
+function runScenario(name) {
+  // Reset state but KEEP PID tuning values from sliders
+  state.oilTemp = name === 'coldstart' ? 10 : 25;
+  state.windingTemp = state.oilTemp;
+  state.prevTemp = state.oilTemp;
+  state.fan1Speed = 0;
+  state.fan2On = false;
+  state.fan2Locked = false;
+  state.criticalLatched = false;
+  state.rateAlarmActive = false;
+  state.coolantFailed = false;
+  state.pid.Kp = parseFloat(document.getElementById('kpSlider').value);
+  state.pid.Ki = parseFloat(document.getElementById('kiSlider').value);
+  state.pid.Kd = parseFloat(document.getElementById('kdSlider').value);
+  state.pid.setpoint = parseFloat(document.getElementById('spSlider').value);
+  state.pid.integral = 0;
+  state.pid.prevError = 0;
+  state.pid.output = 0;
+  state.simTime = 0;
+  state.scenarioTime = 0;
+  state.scenario = name;
+  state.score = 1000;
+
+  // Clear history
+  for (let key in state.history) { state.history[key] = []; }
+
+  // Clear log
+  document.getElementById('eventLog').innerHTML = '';
+
+  // Update scenario buttons
+  document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.closest('.scenario-btn').classList.add('active');
+
+  // If free play, enable manual load control
+  if (name === 'free') {
+    state.load = parseFloat(document.getElementById('loadSlider').value);
+  }
+
+  logEvent('Scenario: ' + name.toUpperCase() + ' started', 'good');
+  if (name === 'coolant_fail') {
+    logEvent('WARNING: Coolant failure in 30s...', 'warn');
+  }
+}
+
+// Slider listeners
+document.getElementById('loadSlider').addEventListener('input', function() {
+  if (state.scenario === 'free' || !state.scenario) {
+    state.load = parseFloat(this.value);
+  }
+  document.getElementById('loadDisplay').textContent = Math.round(this.value) + '%';
+});
+
+document.getElementById('kpSlider').addEventListener('input', function() {
+  state.pid.Kp = parseFloat(this.value);
+  document.getElementById('kpDisplay').textContent = state.pid.Kp.toFixed(2);
+});
+document.getElementById('kiSlider').addEventListener('input', function() {
+  state.pid.Ki = parseFloat(this.value);
+  document.getElementById('kiDisplay').textContent = state.pid.Ki.toFixed(2);
+});
+document.getElementById('kdSlider').addEventListener('input', function() {
+  state.pid.Kd = parseFloat(this.value);
+  document.getElementById('kdDisplay').textContent = state.pid.Kd.toFixed(2);
+});
+document.getElementById('spSlider').addEventListener('input', function() {
+  state.pid.setpoint = parseFloat(this.value);
+  document.getElementById('spDisplay').textContent = state.pid.setpoint.toFixed(1) + ' C';
+});
+document.getElementById('speedSlider').addEventListener('input', function() {
+  state.timeSpeed = parseInt(this.value);
+  document.getElementById('speedDisplay').textContent = state.timeSpeed + 'x';
+});
+
+// ============ MAIN LOOP ============
+
+let lastTime = performance.now();
+
+function gameLoop(now) {
+  const realDt = (now - lastTime) / 1000; // real seconds
+  lastTime = now;
+
+  if (!simRunning) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  // Sim dt (accelerated)
+  const simDt = Math.min(realDt, 0.05) * state.timeSpeed;
+
+  // Step physics in small increments for stability
+  const steps = Math.ceil(simDt / 0.5);
+  const stepDt = simDt / steps;
+  for (let i = 0; i < steps; i++) {
+    stepPhysics(stepDt);
+  }
+
+  // Update UI
+  updateUI();
+  drawChart();
+
+  // Fan animation
+  fan1Angle += (state.fan1Speed / 100) * 0.3;
+  fan2Angle += (state.fan2On ? 0.2 : 0);
+  drawFan('fan1Canvas', state.fan1Speed, fan1Angle);
+  drawFan('fan2Canvas', state.fan2On ? 100 : 0, fan2Angle);
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Start paused — wait for tutorial
+let simRunning = false;
+
+function startSimulation() {
+  document.getElementById('tutorialOverlay').classList.add('hidden');
+  simRunning = true;
+
+  // Auto-launch Runaway scenario for dramatic first impression
+  state.oilTemp = 25;
+  state.windingTemp = 25;
+  state.prevTemp = 25;
+  state.scenario = 'runaway';
+  state.scenarioTime = 0;
+  state.simTime = 0;
+  state.score = 1000;
+  for (let key in state.history) { state.history[key] = []; }
+
+  logEvent('System initialized. Runaway scenario loaded.', 'good');
+  logEvent('630 kVA oil-immersed distribution transformer', '');
+  logEvent('PID setpoint: 72.0 C | Critical: 105 C', '');
+  logEvent('Load ramping to 123%... watch the PID respond.', 'warn');
+
+  // Mark the runaway button as active
+  document.querySelectorAll('.scenario-btn').forEach(btn => {
+    if (btn.textContent.includes('Runaway')) btn.classList.add('active');
+  });
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
