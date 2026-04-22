@@ -12,6 +12,7 @@ type Project = {
 	description: string;
 	tags: string[];
 	article?: string;
+	demo?: string;
 	github: string;
 };
 
@@ -45,6 +46,13 @@ const projects: Project[] = [
 		description: "Closed-loop thermal simulation to stress-test industrial PLC safety logic.",
 		tags: ["digital twin", "plc", "simulation"],
 		article: "/blog/transformer-digital-twin",
+		github: "https://github.com/justkuchkorov/transformer_digital_twin"
+	},
+	{
+		title: "Transformer Control Room",
+		description: "Interactive browser sim — tune a PID controller, survive overloads, and watch thermal physics in real time.",
+		tags: ["pid", "control", "interactive", "simulation"],
+		demo: "/control-room.html",
 		github: "https://github.com/justkuchkorov/transformer_digital_twin"
 	},
 	{
@@ -88,6 +96,7 @@ const projects: Project[] = [
 							</div>
 						</div>
 						<div class="card-bottom">
+							{project.demo && <a href={project.demo} class="card-link demo">Try it <span>&rarr;</span></a>}
 							{project.article && <a href={project.article} class="card-link">Article <span>&rarr;</span></a>}
 							<a href={project.github} class="card-link secondary" target="_blank" rel="noopener noreferrer">GitHub <span>&rarr;</span></a>
 						</div>
@@ -186,6 +195,10 @@ const projects: Project[] = [
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
+	}
+
+	.card-link.demo {
+		color: #4fc3f7;
 	}
 
 	.card-link.secondary {
