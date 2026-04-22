@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microgrid Energy Manager</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: #0a0e17;
+  color: #c8d6e5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #0f1923, #1a2332);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1e3a5f;
+}
+.header h1 { font-size: 16px; color: #4fc3f7; letter-spacing: 2px; }
+.header-info { display: flex; gap: 20px; font-size: 12px; align-items: center; }
+.header-info .clock { color: #ffd54f; font-size: 14px; font-weight: bold; }
+.header-info .speed { color: #7f8c9b; }
+
+.main {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  height: calc(100vh - 46px);
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.left-panel {
+  background: #0d1219;
+  border-right: 1px solid #1e3a5f;
+  padding: 14px;
+  overflow-y: auto;
+}
+.section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #4fc3f7;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #1e3a5f;
+}
+
+.gauge {
+  background: #111820;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.gauge .value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4fc3f7;
+}
+.gauge .unit { font-size: 11px; color: #7f8c9b; }
+.gauge .label { font-size: 10px; color: #7f8c9b; margin-top: 2px; }
+.gauge.solar .value { color: #ffd54f; }
+.gauge.load .value { color: #ff9800; }
+.gauge.price .value { color: #66bb6a; }
+.gauge.price.expensive .value { color: #f44336; }
+.gauge.battery .value { color: #4fc3f7; }
+
+.battery-bar {
+  width: 100%;
+  height: 20px;
+  background: #1a2332;
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.battery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f44336, #ff9800, #66bb6a);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.battery-text {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+
+.price-schedule {
+  margin-top: 10px;
+}
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  padding: 2px 0;
+  color: #7f8c9b;
+}
+.price-row.active { color: #ffd54f; font-weight: bold; }
+
+/* CENTER PANEL */
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.flow-diagram {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.node {
+  background: #111820;
+  border: 2px solid #1e3a5f;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: center;
+  min-width: 90px;
+  position: relative;
+}
+.node .icon { font-size: 22px; }
+.node .node-label { font-size: 9px; color: #7f8c9b; margin-top: 2px; }
+.node .node-value { font-size: 14px; font-weight: bold; color: #4fc3f7; }
+.node.solar { border-color: #ffd54f; }
+.node.battery { border-color: #4fc3f7; }
+.node.load { border-color: #ff9800; }
+.node.grid { border-color: #66bb6a; }
+.node.grid.selling { border-color: #4fc3f7; box-shadow: 0 0 10px rgba(79,195,247,0.3); }
+.node.grid.buying { border-color: #f44336; box-shadow: 0 0 10px rgba(244,67,54,0.3); }
+
+.flow-arrow {
+  font-size: 18px;
+  color: #1e3a5f;
+  min-width: 30px;
+  text-align: center;
+}
+.flow-arrow.active { color: #ffd54f; }
+.flow-arrow.reverse { color: #4fc3f7; }
+
+.controls-area {
+  background: #111820;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.control-row:last-child { margin-bottom: 0; }
+.control-label-left {
+  font-size: 11px;
+  color: #7f8c9b;
+  width: 120px;
+  flex-shrink: 0;
+}
+.control-label-left span { color: #ffd54f; font-weight: bold; }
+
+input[type="range"] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #1a2332;
+  border-radius: 3px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: 2px solid #0a0e17;
+}
+
+.mode-btns {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #1e3a5f;
+  background: #0f1923;
+  color: #7f8c9b;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.mode-btn.active { background: #1e3a5f; color: #4fc3f7; border-color: #4fc3f7; }
+
+.sim-btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.sim-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #1e3a5f;
+  background: #0f1923;
+  color: #c8d6e5;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.sim-btn:hover { background: #1e3a5f; }
+.sim-btn.start { border-color: #66bb6a; color: #66bb6a; }
+.sim-btn.pause { border-color: #ffd54f; color: #ffd54f; }
+.sim-btn.reset { border-color: #f44336; color: #f44336; }
+
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.chart-container canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* RIGHT PANEL */
+.right-panel {
+  background: #0d1219;
+  border-left: 1px solid #1e3a5f;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.score-card {
+  background: #111820;
+  border: 1px solid #1e3a5f;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.score-card .score-value {
+  font-size: 28px;
+  font-weight: bold;
+}
+.score-card .score-label { font-size: 10px; color: #7f8c9b; }
+.score-card.cost .score-value { color: #f44336; }
+.score-card.revenue .score-value { color: #66bb6a; }
+.score-card.net .score-value { color: #ffd54f; }
+.score-card.penalty .score-value { color: #ff5722; }
+.score-card.blackout .score-value { color: #f44336; }
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  padding: 3px 0;
+  border-bottom: 1px solid #0f1923;
+}
+.stats-row .label { color: #7f8c9b; }
+.stats-row .val { color: #c8d6e5; font-weight: bold; }
+
+.event-log {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 10px;
+}
+.event-log .event {
+  padding: 3px 0;
+  border-bottom: 1px solid #0f1923;
+}
+.event-log .event.warn { color: #ffd54f; }
+.event-log .event.bad { color: #f44336; }
+.event-log .event.good { color: #66bb6a; }
+.event-log .event .etime { color: #4fc3f7; margin-right: 6px; }
+
+/* Tutorial overlay */
+.tutorial-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.tutorial-box {
+  background: #111820;
+  border: 2px solid #4fc3f7;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 560px;
+  text-align: center;
+}
+.tutorial-box h2 { color: #4fc3f7; margin-bottom: 16px; font-size: 20px; }
+.tutorial-box p { font-size: 13px; line-height: 1.7; margin-bottom: 12px; color: #c8d6e5; }
+.tutorial-box .highlight { color: #ffd54f; font-weight: bold; }
+.tutorial-box .rules {
+  text-align: left;
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.tutorial-box .rules li { margin-bottom: 4px; }
+.tutorial-box .start-btn {
+  margin-top: 16px;
+  padding: 12px 36px;
+  background: #4fc3f7;
+  color: #0a0e17;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.tutorial-box .start-btn:hover { background: #81d4fa; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="tutorial-overlay" id="tutorial">
+  <div class="tutorial-box">
+    <h2>MICROGRID ENERGY MANAGER</h2>
+    <p>You run a microgrid for 24 hours. Your job: <span class="highlight">minimize your electricity bill</span> without blacking out.</p>
+    <p>You have:</p>
+    <ul class="rules">
+      <li><span class="highlight">5 kW solar panels</span> — free energy, but only when the sun shines</li>
+      <li><span class="highlight">10 kWh battery</span> — store cheap energy, use it when prices spike</li>
+      <li><span class="highlight">Grid connection</span> — buy or sell power, but prices change every hour</li>
+      <li><span class="highlight">House loads</span> — 1-6 kW demand you can't control</li>
+    </ul>
+    <p>Rules:</p>
+    <ul class="rules">
+      <li>Grid price varies: <span class="highlight">night €0.08</span>, day €0.15, <span style="color:#f44336">peak €0.25/kWh</span></li>
+      <li>Drawing &gt;5 kW from grid = <span style="color:#f44336">€0.50/kW penalty</span> per 15-min block</li>
+      <li>Blackout (unmet load) = <span style="color:#f44336">€2 penalty</span> per 15-min block</li>
+      <li>Selling to grid earns <span style="color:#66bb6a">80% of current price</span></li>
+      <li>Battery: max 5 kW charge/discharge, 90% round-trip efficiency</li>
+    </ul>
+    <button class="start-btn" onclick="startGame()">START DAY</button>
+  </div>
+</div>
+
+<div class="header">
+  <h1>MICROGRID ENERGY MANAGER</h1>
+  <div class="header-info">
+    <span class="speed" id="speedLabel">Speed: 1x</span>
+    <span class="clock" id="clock">00:00</span>
+    <span style="color:#7f8c9b">Day Progress</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="section-title">Live Readings</div>
+
+    <div class="gauge solar">
+      <div class="value" id="solarVal">0.0</div>
+      <div class="unit">kW</div>
+      <div class="label">Solar Generation</div>
+    </div>
+
+    <div class="gauge load">
+      <div class="value" id="loadVal">0.0</div>
+      <div class="unit">kW</div>
+      <div class="label">House Demand</div>
+    </div>
+
+    <div class="gauge price" id="priceGauge">
+      <div class="value" id="priceVal">0.00</div>
+      <div class="unit">€/kWh</div>
+      <div class="label">Grid Price Now</div>
+    </div>
+
+    <div class="gauge battery">
+      <div class="value" id="socVal">50</div>
+      <div class="unit">%</div>
+      <div class="label">Battery SOC</div>
+      <div class="battery-bar">
+        <div class="battery-fill" id="batteryFill" style="width:50%"></div>
+        <div class="battery-text" id="batteryKwh">5.0 kWh</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:14px">Price Schedule</div>
+    <div class="price-schedule" id="priceSchedule"></div>
+
+    <div class="section-title" style="margin-top:14px">Energy Balance</div>
+    <div class="stats-row"><span class="label">Solar →</span><span class="val" id="balSolar">0.0 kW</span></div>
+    <div class="stats-row"><span class="label">Battery →</span><span class="val" id="balBatt">0.0 kW</span></div>
+    <div class="stats-row"><span class="label">Grid →</span><span class="val" id="balGrid">0.0 kW</span></div>
+    <div class="stats-row"><span class="label">Load ←</span><span class="val" id="balLoad">0.0 kW</span></div>
+    <div class="stats-row"><span class="label">Surplus/Deficit</span><span class="val" id="balNet">0.0 kW</span></div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="center-panel">
+    <div class="flow-diagram">
+      <div class="node solar" id="solarNode">
+        <div class="icon">☀️</div>
+        <div class="node-value" id="solarFlow">0.0 kW</div>
+        <div class="node-label">SOLAR</div>
+      </div>
+      <div class="flow-arrow" id="arrow1">→</div>
+      <div class="node battery" id="battNode">
+        <div class="icon">🔋</div>
+        <div class="node-value" id="battFlow">0.0 kW</div>
+        <div class="node-label">BATTERY</div>
+      </div>
+      <div class="flow-arrow" id="arrow2">→</div>
+      <div class="node load" id="loadNode">
+        <div class="icon">🏠</div>
+        <div class="node-value" id="loadFlow">0.0 kW</div>
+        <div class="node-label">LOADS</div>
+      </div>
+      <div class="flow-arrow" id="arrow3">↔</div>
+      <div class="node grid" id="gridNode">
+        <div class="icon">⚡</div>
+        <div class="node-value" id="gridFlow">0.0 kW</div>
+        <div class="node-label">GRID</div>
+      </div>
+    </div>
+
+    <div class="controls-area">
+      <div class="section-title">Your Decisions</div>
+
+      <div class="mode-btns">
+        <button class="mode-btn active" id="modeManual" onclick="setMode('manual')">Manual Control</button>
+        <button class="mode-btn" id="modeAuto" onclick="setMode('auto')">Auto (Baseline)</button>
+      </div>
+
+      <div class="control-row">
+        <div class="control-label-left">Battery: <span id="battCmdLabel">0.0 kW</span></div>
+        <input type="range" id="battSlider" min="-5" max="5" value="0" step="0.1"
+          oninput="document.getElementById('battCmdLabel').textContent=parseFloat(this.value).toFixed(1)+' kW'">
+      </div>
+      <div style="font-size:9px;color:#7f8c9b;margin:-6px 0 8px 130px">← Discharge | Charge →</div>
+
+      <div class="control-row">
+        <div class="control-label-left">Grid limit: <span id="gridLimitLabel">5.0 kW</span></div>
+        <input type="range" id="gridLimitSlider" min="0" max="10" value="5" step="0.5"
+          oninput="document.getElementById('gridLimitLabel').textContent=parseFloat(this.value).toFixed(1)+' kW'">
+      </div>
+      <div style="font-size:9px;color:#7f8c9b;margin:-6px 0 8px 130px">Max you'll buy from grid (>5 = penalty)</div>
+
+      <div class="sim-btns">
+        <button class="sim-btn start" id="startBtn" onclick="togglePause()">▶ PLAY</button>
+        <button class="sim-btn" onclick="setSpeed(1)">1x</button>
+        <button class="sim-btn" onclick="setSpeed(4)">4x</button>
+        <button class="sim-btn" onclick="setSpeed(10)">10x</button>
+        <button class="sim-btn reset" onclick="resetGame()">RESET</button>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="section-title">Financials</div>
+
+    <div class="score-card cost">
+      <div class="score-value" id="totalCost">€0.00</div>
+      <div class="score-label">Total Grid Cost</div>
+    </div>
+    <div class="score-card revenue">
+      <div class="score-value" id="totalRevenue">€0.00</div>
+      <div class="score-label">Grid Sales Revenue</div>
+    </div>
+    <div class="score-card penalty">
+      <div class="score-value" id="totalPenalty">€0.00</div>
+      <div class="score-label">Penalties</div>
+    </div>
+    <div class="score-card net">
+      <div class="score-value" id="netCost">€0.00</div>
+      <div class="score-label">NET BILL</div>
+    </div>
+
+    <div class="section-title" style="margin-top:12px">Statistics</div>
+    <div class="stats-row"><span class="label">Solar Used</span><span class="val" id="statSolarUsed">0.0 kWh</span></div>
+    <div class="stats-row"><span class="label">Solar Curtailed</span><span class="val" id="statSolarWasted">0.0 kWh</span></div>
+    <div class="stats-row"><span class="label">Grid Bought</span><span class="val" id="statGridBought">0.0 kWh</span></div>
+    <div class="stats-row"><span class="label">Grid Sold</span><span class="val" id="statGridSold">0.0 kWh</span></div>
+    <div class="stats-row"><span class="label">Peak Grid Draw</span><span class="val" id="statPeakGrid">0.0 kW</span></div>
+    <div class="stats-row"><span class="label">Blackout Blocks</span><span class="val" id="statBlackouts">0</span></div>
+    <div class="stats-row"><span class="label">Self-Sufficiency</span><span class="val" id="statSelfSuff">0%</span></div>
+
+    <div class="section-title" style="margin-top:12px">Benchmarks</div>
+    <div class="stats-row"><span class="label">Dumb (buy all)</span><span class="val">~€8.50</span></div>
+    <div class="stats-row"><span class="label">Average player</span><span class="val">~€4.00</span></div>
+    <div class="stats-row"><span class="label">Pro optimizer</span><span class="val">~€1.50</span></div>
+    <div class="stats-row"><span class="label">Perfect play</span><span class="val">~€0.80</span></div>
+
+    <div class="section-title" style="margin-top:12px">Event Log</div>
+    <div class="event-log" id="eventLog"></div>
+  </div>
+</div>
+
+<script>
+// ========== PHYSICS & PROFILES ==========
+
+// Solar profile (kW): bell curve peaking at noon, with cloud noise
+function solarProfile(hour) {
+  if (hour < 5.5 || hour > 20) return 0;
+  const peak = 5.0;
+  const center = 12.5;
+  const sigma = 3.2;
+  let base = peak * Math.exp(-0.5 * Math.pow((hour - center) / sigma, 2));
+  // Cloud noise
+  const cloudSeed = Math.sin(hour * 7.3) * 0.5 + Math.sin(hour * 13.1) * 0.3;
+  base *= Math.max(0.3, 1 + cloudSeed * 0.35);
+  return Math.max(0, base);
+}
+
+// Load profile (kW): residential pattern
+function loadProfile(hour) {
+  // Base load 1kW, morning peak 3-4kW, evening peak 4-6kW
+  let base = 1.2;
+  // Morning 6-9
+  if (hour >= 6 && hour < 9) base += 2.0 * Math.sin((hour - 6) / 3 * Math.PI);
+  // Midday dip
+  if (hour >= 10 && hour < 15) base += 1.0;
+  // Evening peak 17-22
+  if (hour >= 17 && hour < 22) {
+    const t = (hour - 17) / 5;
+    base += 4.5 * Math.sin(t * Math.PI);
+  }
+  // Night minimum
+  if (hour >= 23 || hour < 5) base = 0.8;
+  // Add noise
+  base += Math.sin(hour * 11.7) * 0.3 + Math.sin(hour * 5.3) * 0.2;
+  return Math.max(0.5, base);
+}
+
+// Grid price schedule (€/kWh)
+const PRICE_SCHEDULE = [
+  { start: 0, end: 6, price: 0.08, label: 'Night' },
+  { start: 6, end: 9, price: 0.15, label: 'Morning' },
+  { start: 9, end: 11, price: 0.20, label: 'Mid-Morning' },
+  { start: 11, end: 14, price: 0.15, label: 'Midday' },
+  { start: 14, end: 17, price: 0.20, label: 'Afternoon' },
+  { start: 17, end: 21, price: 0.25, label: 'Peak' },
+  { start: 21, end: 24, price: 0.12, label: 'Late Evening' },
+];
+
+function getPrice(hour) {
+  for (const s of PRICE_SCHEDULE) {
+    if (hour >= s.start && hour < s.end) return s.price;
+  }
+  return 0.08;
+}
+
+// ========== GAME STATE ==========
+const BATTERY_MAX = 10; // kWh
+const BATTERY_CHARGE_MAX = 5; // kW
+const BATTERY_DISCHARGE_MAX = 5; // kW
+const BATTERY_EFF = 0.90; // round-trip → sqrt per direction
+const EFF_CHARGE = Math.sqrt(BATTERY_EFF); // ~0.949
+const EFF_DISCHARGE = Math.sqrt(BATTERY_EFF);
+const GRID_PENALTY_THRESHOLD = 5; // kW
+const GRID_PENALTY_RATE = 0.50; // €/kW per block
+const BLACKOUT_PENALTY = 2.0; // € per block
+const SELL_RATIO = 0.80; // sell at 80% of grid price
+const DT = 0.25; // 15 minutes in hours
+
+let state = {
+  hour: 0,
+  running: false,
+  speed: 1,
+  mode: 'manual',
+  // Battery
+  soc: 50, // percentage
+  batteryKwh: 5.0,
+  // Current values
+  solarKw: 0,
+  loadKw: 0,
+  priceNow: 0.08,
+  battCmd: 0, // kW (positive = charge, negative = discharge)
+  gridKw: 0,
+  gridLimit: 5,
+  // Financials
+  totalCost: 0,
+  totalRevenue: 0,
+  totalPenalty: 0,
+  // Stats
+  solarUsed: 0,
+  solarWasted: 0,
+  gridBought: 0,
+  gridSold: 0,
+  peakGrid: 0,
+  blackouts: 0,
+  totalLoad: 0,
+  totalSolarDirect: 0,
+  // History for chart
+  history: {
+    time: [],
+    solar: [],
+    load: [],
+    battery: [],
+    grid: [],
+    soc: [],
+    price: [],
+  },
+  events: [],
+  gameOver: false,
+};
+
+// ========== SIMULATION ==========
+let simInterval = null;
+const TICK_MS = 100; // base tick rate
+const SIM_DT_PER_TICK = DT / (60000 / TICK_MS * 15); // 15 sim-minutes per real interval at 1x
+
+function simTick() {
+  if (!state.running || state.gameOver) return;
+
+  // Advance time
+  const realDt = DT / 60; // hours per tick at 1x (0.25 min)
+  const simStep = realDt * state.speed;
+  state.hour += simStep;
+
+  if (state.hour >= 24) {
+    state.hour = 24;
+    state.running = false;
+    state.gameOver = true;
+    logEvent('DAY COMPLETE! Final bill: €' + netBill().toFixed(2), 'good');
+    document.getElementById('startBtn').textContent = 'DONE';
+    return;
+  }
+
+  // Read environment
+  state.solarKw = solarProfile(state.hour);
+  state.loadKw = loadProfile(state.hour);
+  state.priceNow = getPrice(state.hour);
+
+  // Player decisions
+  let battCmd, gridLimit;
+  if (state.mode === 'manual') {
+    battCmd = parseFloat(document.getElementById('battSlider').value);
+    gridLimit = parseFloat(document.getElementById('gridLimitSlider').value);
+  } else {
+    // Auto baseline: simple strategy
+    battCmd = autoStrategy();
+    gridLimit = 5;
+  }
+
+  // Constrain battery command by SOC
+  const maxCharge = Math.min(BATTERY_CHARGE_MAX, (BATTERY_MAX - state.batteryKwh) / (simStep * EFF_CHARGE + 0.001));
+  const maxDischarge = Math.min(BATTERY_DISCHARGE_MAX, state.batteryKwh / (simStep / EFF_DISCHARGE + 0.001));
+  battCmd = Math.max(-maxDischarge, Math.min(maxCharge, battCmd));
+
+  // Energy balance
+  // Available = solar - load (positive means surplus)
+  const netLocal = state.solarKw - state.loadKw;
+
+  // Battery action
+  let battActual = battCmd;
+  // Update SOC
+  if (battActual > 0) {
+    // Charging
+    state.batteryKwh += battActual * simStep * EFF_CHARGE;
+  } else {
+    // Discharging
+    state.batteryKwh += battActual * simStep * EFF_DISCHARGE; // battActual is negative
+  }
+  state.batteryKwh = Math.max(0, Math.min(BATTERY_MAX, state.batteryKwh));
+  state.soc = (state.batteryKwh / BATTERY_MAX) * 100;
+
+  // Grid = load + battCharge - solar - battDischarge
+  // Positive = buying, negative = selling
+  let gridKw = state.loadKw + Math.max(0, battActual) - state.solarKw - Math.max(0, -battActual);
+
+  // Check for unmet load (if we refuse grid and battery is empty)
+  let blackout = false;
+  let solarUsedNow = Math.min(state.solarKw, state.loadKw + Math.max(0, battActual));
+  let solarWastedNow = state.solarKw - solarUsedNow;
+
+  // Grid clamping
+  if (gridKw > gridLimit) {
+    // Can't draw more than limit — might cause blackout
+    const deficit = gridKw - gridLimit;
+    gridKw = gridLimit;
+    // Check if battery can cover
+    if (deficit > 0) {
+      blackout = true;
+    }
+  }
+
+  state.gridKw = gridKw;
+  state.battCmd = battActual;
+
+  // Financial accounting
+  const energyKwh = Math.abs(gridKw) * simStep;
+  if (gridKw > 0) {
+    // Buying
+    state.totalCost += energyKwh * state.priceNow;
+    state.gridBought += energyKwh;
+  } else if (gridKw < 0) {
+    // Selling
+    state.totalRevenue += energyKwh * state.priceNow * SELL_RATIO;
+    state.gridSold += energyKwh;
+  }
+
+  // Peak penalty (>5kW from grid)
+  if (gridKw > GRID_PENALTY_THRESHOLD) {
+    state.totalPenalty += (gridKw - GRID_PENALTY_THRESHOLD) * GRID_PENALTY_RATE * simStep;
+  }
+
+  // Blackout penalty
+  if (blackout) {
+    state.totalPenalty += BLACKOUT_PENALTY * simStep * 4; // per 15-min block equivalent
+    state.blackouts++;
+    if (state.events.length === 0 || !state.events[state.events.length-1].text.includes('BLACKOUT')) {
+      logEvent('BLACKOUT! Unmet load — increase grid limit or discharge battery', 'bad');
+    }
+  }
+
+  // Stats
+  state.solarUsed += solarUsedNow * simStep;
+  state.solarWasted += Math.max(0, solarWastedNow) * simStep;
+  state.totalLoad += state.loadKw * simStep;
+  if (gridKw > state.peakGrid) state.peakGrid = gridKw;
+
+  // History
+  state.history.time.push(state.hour);
+  state.history.solar.push(state.solarKw);
+  state.history.load.push(state.loadKw);
+  state.history.battery.push(battActual);
+  state.history.grid.push(gridKw);
+  state.history.soc.push(state.soc);
+  state.history.price.push(state.priceNow);
+
+  // Milestone events
+  checkMilestones();
+  updateDisplay();
+}
+
+function autoStrategy() {
+  const surplus = state.solarKw - state.loadKw;
+  const price = state.priceNow;
+  const soc = state.soc;
+
+  // Charge from solar surplus
+  if (surplus > 0 && soc < 95) return Math.min(surplus, BATTERY_CHARGE_MAX);
+  // Charge at night (cheap)
+  if (price <= 0.08 && soc < 80) return 3.0;
+  // Discharge at peak
+  if (price >= 0.25 && soc > 20) return -3.0;
+  // Discharge to cover evening load
+  if (price >= 0.20 && soc > 30 && state.loadKw > state.solarKw) {
+    return -Math.min(state.loadKw - state.solarKw, BATTERY_DISCHARGE_MAX);
+  }
+  return 0;
+}
+
+let lastMilestoneHour = -1;
+function checkMilestones() {
+  const h = Math.floor(state.hour);
+  if (h === lastMilestoneHour) return;
+  lastMilestoneHour = h;
+
+  if (h === 6) logEvent('Dawn — solar panels waking up', 'good');
+  if (h === 9) logEvent('Morning peak prices starting (€0.20/kWh)', 'warn');
+  if (h === 12) logEvent('Solar at peak — time to store energy!', 'good');
+  if (h === 17) logEvent('PEAK PRICING starts (€0.25/kWh) — watch your grid usage!', 'warn');
+  if (h === 21) logEvent('Peak over — prices dropping', 'good');
+  if (state.soc <= 5 && h > 16) logEvent('Battery nearly empty before evening peak!', 'bad');
+}
+
+// ========== DISPLAY ==========
+function updateDisplay() {
+  // Clock
+  const hours = Math.floor(state.hour);
+  const mins = Math.floor((state.hour % 1) * 60);
+  document.getElementById('clock').textContent =
+    String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
+
+  // Gauges
+  document.getElementById('solarVal').textContent = state.solarKw.toFixed(1);
+  document.getElementById('loadVal').textContent = state.loadKw.toFixed(1);
+  document.getElementById('priceVal').textContent = state.priceNow.toFixed(2);
+  document.getElementById('socVal').textContent = Math.round(state.soc);
+  document.getElementById('batteryFill').style.width = state.soc + '%';
+  document.getElementById('batteryKwh').textContent = state.batteryKwh.toFixed(1) + ' kWh';
+
+  // Price gauge color
+  const pg = document.getElementById('priceGauge');
+  pg.className = 'gauge price' + (state.priceNow >= 0.20 ? ' expensive' : '');
+
+  // Price schedule highlight
+  buildPriceSchedule();
+
+  // Flow diagram
+  document.getElementById('solarFlow').textContent = state.solarKw.toFixed(1) + ' kW';
+  document.getElementById('battFlow').textContent =
+    (state.battCmd >= 0 ? '+' : '') + state.battCmd.toFixed(1) + ' kW';
+  document.getElementById('loadFlow').textContent = state.loadKw.toFixed(1) + ' kW';
+  document.getElementById('gridFlow').textContent =
+    (state.gridKw >= 0 ? 'Buy ' : 'Sell ') + Math.abs(state.gridKw).toFixed(1) + ' kW';
+
+  const gn = document.getElementById('gridNode');
+  gn.className = 'node grid' + (state.gridKw > 0.1 ? ' buying' : state.gridKw < -0.1 ? ' selling' : '');
+
+  // Energy balance
+  document.getElementById('balSolar').textContent = state.solarKw.toFixed(1) + ' kW';
+  document.getElementById('balBatt').textContent = (state.battCmd >= 0 ? '+' : '') + state.battCmd.toFixed(1) + ' kW';
+  document.getElementById('balGrid').textContent = (state.gridKw >= 0 ? '+' : '') + state.gridKw.toFixed(1) + ' kW';
+  document.getElementById('balLoad').textContent = state.loadKw.toFixed(1) + ' kW';
+  const netBalance = state.solarKw - state.battCmd - state.loadKw - state.gridKw;
+  document.getElementById('balNet').textContent = netBalance.toFixed(2) + ' kW';
+
+  // Financials
+  document.getElementById('totalCost').textContent = '€' + state.totalCost.toFixed(2);
+  document.getElementById('totalRevenue').textContent = '€' + state.totalRevenue.toFixed(2);
+  document.getElementById('totalPenalty').textContent = '€' + state.totalPenalty.toFixed(2);
+  document.getElementById('netCost').textContent = '€' + netBill().toFixed(2);
+
+  // Stats
+  document.getElementById('statSolarUsed').textContent = state.solarUsed.toFixed(1) + ' kWh';
+  document.getElementById('statSolarWasted').textContent = state.solarWasted.toFixed(1) + ' kWh';
+  document.getElementById('statGridBought').textContent = state.gridBought.toFixed(1) + ' kWh';
+  document.getElementById('statGridSold').textContent = state.gridSold.toFixed(1) + ' kWh';
+  document.getElementById('statPeakGrid').textContent = state.peakGrid.toFixed(1) + ' kW';
+  document.getElementById('statBlackouts').textContent = state.blackouts;
+  const selfSuff = state.totalLoad > 0 ? ((1 - state.gridBought / state.totalLoad) * 100) : 0;
+  document.getElementById('statSelfSuff').textContent = Math.max(0, selfSuff).toFixed(0) + '%';
+
+  drawChart();
+}
+
+function netBill() {
+  return state.totalCost - state.totalRevenue + state.totalPenalty;
+}
+
+function buildPriceSchedule() {
+  const el = document.getElementById('priceSchedule');
+  el.innerHTML = '';
+  for (const s of PRICE_SCHEDULE) {
+    const row = document.createElement('div');
+    row.className = 'price-row' + (state.hour >= s.start && state.hour < s.end ? ' active' : '');
+    row.innerHTML = '<span>' + String(s.start).padStart(2,'0') + ':00-' + String(s.end).padStart(2,'0') + ':00</span>' +
+      '<span>' + s.label + '</span><span>€' + s.price.toFixed(2) + '</span>';
+    el.appendChild(row);
+  }
+}
+
+// ========== CHART ==========
+function drawChart() {
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+  const W = canvas.width, H = canvas.height;
+
+  ctx.fillStyle = '#0a0e17';
+  ctx.fillRect(0, 0, W, H);
+
+  const pad = { top: 30, right: 60, bottom: 30, left: 50 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  // X axis: 0-24 hours
+  function xPos(hour) { return pad.left + (hour / 24) * cW; }
+  // Y axis: -6 to 8 kW
+  const yMin = -6, yMax = 8;
+  function yPos(val) { return pad.top + (1 - (val - yMin) / (yMax - yMin)) * cH; }
+
+  // Grid lines
+  ctx.strokeStyle = '#1a2332';
+  ctx.lineWidth = 1;
+  for (let v = yMin; v <= yMax; v += 2) {
+    ctx.beginPath();
+    ctx.moveTo(pad.left, yPos(v));
+    ctx.lineTo(W - pad.right, yPos(v));
+    ctx.stroke();
+    ctx.fillStyle = '#7f8c9b';
+    ctx.font = '9px Consolas';
+    ctx.textAlign = 'right';
+    ctx.fillText(v + ' kW', pad.left - 4, yPos(v) + 3);
+  }
+
+  // Zero line
+  ctx.strokeStyle = '#2a3a4f';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, yPos(0));
+  ctx.lineTo(W - pad.right, yPos(0));
+  ctx.stroke();
+
+  // Hour labels
+  ctx.fillStyle = '#7f8c9b';
+  ctx.font = '9px Consolas';
+  ctx.textAlign = 'center';
+  for (let h = 0; h <= 24; h += 3) {
+    ctx.fillText(h + ':00', xPos(h), H - pad.bottom + 14);
+  }
+
+  // Price background bands
+  for (const s of PRICE_SCHEDULE) {
+    const alpha = s.price >= 0.25 ? 0.08 : s.price >= 0.20 ? 0.04 : 0;
+    if (alpha > 0) {
+      ctx.fillStyle = 'rgba(244,67,54,' + alpha + ')';
+      ctx.fillRect(xPos(s.start), pad.top, xPos(s.end) - xPos(s.start), cH);
+    }
+  }
+
+  // Draw lines
+  const data = state.history;
+  if (data.time.length < 2) return;
+
+  function drawLine(arr, color, width) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width || 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < data.time.length; i++) {
+      const x = xPos(data.time[i]);
+      const y = yPos(arr[i]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  drawLine(data.solar, '#ffd54f', 2);   // Solar
+  drawLine(data.load, '#ff9800', 2);     // Load
+  drawLine(data.grid, '#66bb6a', 1.5);   // Grid
+  drawLine(data.battery, '#4fc3f7', 1.5); // Battery
+
+  // SOC on right axis (0-100%)
+  ctx.strokeStyle = '#4fc3f780';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  for (let i = 0; i < data.time.length; i++) {
+    const x = xPos(data.time[i]);
+    const y = pad.top + (1 - data.soc[i] / 100) * cH;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Right axis labels (SOC)
+  ctx.fillStyle = '#4fc3f780';
+  ctx.textAlign = 'left';
+  for (let p = 0; p <= 100; p += 25) {
+    const y = pad.top + (1 - p / 100) * cH;
+    ctx.fillText(p + '%', W - pad.right + 4, y + 3);
+  }
+
+  // Current time marker
+  if (state.hour > 0 && state.hour < 24) {
+    ctx.strokeStyle = '#ffffff40';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath();
+    ctx.moveTo(xPos(state.hour), pad.top);
+    ctx.lineTo(xPos(state.hour), pad.top + cH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Legend
+  const legend = [
+    { label: 'Solar', color: '#ffd54f' },
+    { label: 'Load', color: '#ff9800' },
+    { label: 'Grid', color: '#66bb6a' },
+    { label: 'Battery', color: '#4fc3f7' },
+    { label: 'SOC %', color: '#4fc3f780' },
+  ];
+  let lx = pad.left + 10;
+  ctx.font = '10px Consolas';
+  for (const item of legend) {
+    ctx.fillStyle = item.color;
+    ctx.fillRect(lx, 8, 14, 3);
+    ctx.fillText(item.label, lx + 18, 13);
+    lx += ctx.measureText(item.label).width + 32;
+  }
+}
+
+// ========== CONTROLS ==========
+function startGame() {
+  document.getElementById('tutorial').classList.add('hidden');
+  buildPriceSchedule();
+  updateDisplay();
+}
+
+function togglePause() {
+  if (state.gameOver) return;
+  state.running = !state.running;
+  document.getElementById('startBtn').textContent = state.running ? '⏸ PAUSE' : '▶ PLAY';
+  document.getElementById('startBtn').className = state.running ? 'sim-btn pause' : 'sim-btn start';
+}
+
+function setSpeed(s) {
+  state.speed = s;
+  document.getElementById('speedLabel').textContent = 'Speed: ' + s + 'x';
+}
+
+function setMode(m) {
+  state.mode = m;
+  document.getElementById('modeManual').className = 'mode-btn' + (m === 'manual' ? ' active' : '');
+  document.getElementById('modeAuto').className = 'mode-btn' + (m === 'auto' ? ' active' : '');
+  if (m === 'auto') {
+    logEvent('Auto baseline enabled — can you beat it?', 'warn');
+  } else {
+    logEvent('Manual control — you decide everything', 'good');
+  }
+}
+
+function resetGame() {
+  state = {
+    hour: 0, running: false, speed: 1, mode: 'manual',
+    soc: 50, batteryKwh: 5.0,
+    solarKw: 0, loadKw: 0, priceNow: 0.08, battCmd: 0, gridKw: 0, gridLimit: 5,
+    totalCost: 0, totalRevenue: 0, totalPenalty: 0,
+    solarUsed: 0, solarWasted: 0, gridBought: 0, gridSold: 0, peakGrid: 0, blackouts: 0,
+    totalLoad: 0, totalSolarDirect: 0,
+    history: { time: [], solar: [], load: [], battery: [], grid: [], soc: [], price: [] },
+    events: [], gameOver: false,
+  };
+  lastMilestoneHour = -1;
+  document.getElementById('startBtn').textContent = '▶ PLAY';
+  document.getElementById('startBtn').className = 'sim-btn start';
+  document.getElementById('battSlider').value = 0;
+  document.getElementById('battCmdLabel').textContent = '0.0 kW';
+  document.getElementById('gridLimitSlider').value = 5;
+  document.getElementById('gridLimitLabel').textContent = '5.0 kW';
+  document.getElementById('eventLog').innerHTML = '';
+  buildPriceSchedule();
+  updateDisplay();
+}
+
+function logEvent(text, type) {
+  const hours = Math.floor(state.hour);
+  const mins = Math.floor((state.hour % 1) * 60);
+  const timeStr = String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
+  state.events.push({ text, type, time: timeStr });
+  const log = document.getElementById('eventLog');
+  const div = document.createElement('div');
+  div.className = 'event ' + (type || '');
+  div.innerHTML = '<span class="etime">' + timeStr + '</span>' + text;
+  log.insertBefore(div, log.firstChild);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+// ========== MAIN LOOP ==========
+setInterval(simTick, TICK_MS);
+buildPriceSchedule();
+updateDisplay();
+</script>
+</body>
+</html>
